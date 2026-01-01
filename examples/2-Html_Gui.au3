@@ -183,7 +183,8 @@ EndFunc   ;==>ShowWebNotification
 ; Synchronizes WebView size with the GUI window
 Func WM_SIZE($hWnd, $iMsg, $wParam, $lParam)
 	#forceref $hWnd, $iMsg, $wParam
-	If $wParam = 1 Then Return $GUI_RUNDEFMSG
+	If $hWnd <> $hGUI Then Return $GUI_RUNDEFMSG ; critical, to respond only to the $hGUI
+	If $wParam = 1 Then Return $GUI_RUNDEFMSG ; 1 = SIZE_MINIMIZED
 	Local $iW = BitAND($lParam, 0xFFFF), $iH = BitShift($lParam, 16) - 50
 	If IsObj($oManager) Then $oManager.Resize(($iW < 10 ? 10 : $iW), ($iH < 10 ? 10 : $iH))
 	Return $GUI_RUNDEFMSG

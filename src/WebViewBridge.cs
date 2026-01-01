@@ -6,15 +6,12 @@ namespace NetWebView2Lib
 {
     
     [ComVisible(true)]
-    /// <summary>
-    /// Delegate for receiving messages.
-    /// </summary>
-    /// <param name="message">The message received.</param>
     public delegate void OnMessageReceivedDelegate(string message);
-    // Event interface for receiving messages from AutoIt
+
     /// <summary>
     /// Event interface for receiving messages from AutoIt.
     /// </summary>
+    // Event interface for receiving messages from AutoIt
     [Guid("3E4F5A6B-7C8D-9E0F-1A2B-3C4D5E6F7A8B")]
     [InterfaceType(ComInterfaceType.InterfaceIsIDispatch)]
     [ComVisible(true)]
@@ -28,10 +25,10 @@ namespace NetWebView2Lib
         void OnMessageReceived(string message);
     }
 
-    // Action interface for sending messages to AutoIt
     /// <summary>
     /// Action interface for sending messages to AutoIt.
     /// </summary>
+    // Action interface for sending messages to AutoIt
     [Guid("2D3E4F5A-6A7A-4A9B-8C7D-2E3F4A5B6C7D")]
     [InterfaceType(ComInterfaceType.InterfaceIsDual)]
     [ComVisible(true)]
@@ -45,10 +42,10 @@ namespace NetWebView2Lib
         void RaiseMessage(string message);
     }
 
-    // Implementation of the bridge between WebView2 and AutoIt
     /// <summary>
     /// Implementation of the bridge between WebView2 and AutoIt.
     /// </summary>
+    // Implementation of the bridge between WebView2 and AutoIt
     [Guid("1A2B3C4D-5E6F-4A8B-9C0D-1E2F3A4B5C6D")]
     [ClassInterface(ClassInterfaceType.None)]
     [ComSourceInterfaces(typeof(IBridgeEvents))]
@@ -69,11 +66,12 @@ namespace NetWebView2Lib
             _syncContext = SynchronizationContext.Current ?? new SynchronizationContext();
         }
 
-        // Method to send messages to AutoIt
+
         /// <summary>
         /// Send a message to AutoIt.
         /// </summary>
         /// <param name="message">The message content.</param>
+        // Method to send messages to AutoIt 
         public void RaiseMessage(string message)
         {
             if (OnMessageReceived != null)

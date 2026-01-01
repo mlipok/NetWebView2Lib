@@ -1,7 +1,81 @@
-**Current Version:** 1.3.0 (2025-12-25)
+**Current Version:** 1.4.0 - (2026-01-01)
 
 ---
+## Version 1.4.0 - (2026-01-01)
+### Added
 
+- **Unified Settings & Permissions (New Property System)**
+    - Implemented a comprehensive set of Read/Write properties to control WebView2 behavior directly from AutoIt.
+    - **Properties** (DispIds 170-179):
+        - `AreDevToolsEnabled`: Toggle Developer Tools.
+        - `AreDefaultContextMenusEnabled`: Control native context menus.
+        - `AreDefaultScriptDialogsEnabled`: Suppress or allow alerts/prompts.
+        - `AreBrowserAcceleratorKeysEnabled`: Manage browser shortcuts.
+        - `IsStatusBarEnabled`: Toggle the status bar.
+        - `ZoomFactor`: Direct access to zoom level.
+        - `BackColor`: Set background color using Hex strings (e.g., "0xFFFFFF").
+        - `AreHostObjectsAllowed`: Control JS bridge access.
+        - `Anchor`: Manage control resizing behavior.
+    - **Methods** (DispIds 180-184):
+        - `SetZoomFactor`: Helper method for zoom.
+        - `OpenDevToolsWindow`: Programmatically open DevTools.
+        - `WebViewSetFocus`: Force focus to the WebView control.
+        - **`AddInitializationScript`**: (New) Injects and manages persistent JS logic.
+
+- **Custom Context Menu System**
+    - Implemented `OnContextMenu` COM event (DispId 6) to intercept user right-clicks.
+    - Added data payload support providing context metadata (Coordinates, Kind, Selection, Source URL, Link URL) via JSON.
+    - Sent as raw JSON string (prefixed with "JSON:") to avoid Base64 overhead.
+
+- **Focus Management Overhaul**
+    - `OnBrowserGotFocus` (DispId 11): Native event triggering when WebView gains focus.
+    - `OnBrowserLostFocus` (DispId 12): Native event triggering when focus leaves the WebView hierarchy.
+    - Refactored logic to use `AreDevToolsEnabled` style properties instead of legacy timers for cleaner integration.
+
+- **Utilities**
+    - `EncodeURI` (DispId 165): Native UTF-8 encoding for safe URL parameter generation.
+    - `DecodeURI` (DispId 166): Native decoding to convert percent-encoded strings.
+    - `EncodeB64` (DispId 167): Native encoding (UTF-8) -> Base64.
+    - `DecodeB64` (DispId 168): Native decoding  Base64 -> String (UTF8).
+
+- **Navigation Lifecycle Events**
+    - `OnNavigationStarting` (DispId 2): Intercepts and validates URLs before loading.
+    - `OnNavigationCompleted` (DispId 3): Detailed navigation status and `WebErrorStatus`.
+
+- **State Synchronization**
+    - `OnTitleChanged` (DispId 4): Real-time synchronization of document title.
+    - `OnURLChanged` (DispId 13): Real-time tracking of URL changes.
+    - `OnZoomChanged` (DispId 10): Event fired when zoom level changes.
+
+- **Property Getters**
+    - `GetSource` (DispId 160) & `GetDocumentTitle` (DispId 161).
+    - `GetCanGoBack` (DispId 162) & `GetCanGoForward` (DispId 163).
+    - `GetBrowserProcessId` (DispId 164).
+
+- **Permanent JavaScript Injection System**
+    
+    - Implemented `AddInitializationScript` (DispId 184): Allows permanent injection of JavaScript libraries (like `bridge.js`) that persist across navigations and page refreshes.
+        
+    - Added automated script lifecycle management using `AddScriptToExecuteOnDocumentCreatedAsync`.
+        
+    - Integrated **Script ID Tracking**: The library now remembers the last injected script ID to allow clean replacement or removal, preventing memory leaks and script duplication.
+        
+
+---
+### Fixed
+
+- **Focus Bounce Issue** Resolved where internal focus changes triggered false "LostFocus" events. Implemented robust checks using `BeginInvoke` and `ContainsFocus`.
+- **CS1061 Compile Error** Corrected `TitleChanged` to standard `DocumentTitleChanged` event mapping.
+- **Context Menu JSON** Fixed JSON escaping for special characters in selection text and URLs.
+
+### Changed
+
+- **Refactored Event Registration** Cleaned up `RegisterEvents` to remove legacy AdBlock/Context Menu duplication while preserving functionality.
+- **DispId Standardization** Re-mapped `OnURLChanged` to DispId 13 to avoid conflicts.
+- **Extension Management**
+    - `AddExtension` (DispId 150) now returns the internal ID for better lifecycle management via `RemoveExtension` (DispId 151).
+
+---
 ## Version 1.3.0  - (2025-12-25)
 
 ### Added
