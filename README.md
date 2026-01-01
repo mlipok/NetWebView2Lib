@@ -45,7 +45,7 @@ A powerful bridge that allows **AutoIt** to use the modern **Microsoft Edge WebV
 
 ## 📖 NetWebView2Lib Version 1.4.0 - Reference (Quick View)
 
-## Properties
+### Properties
 
 ##### AreDevToolsEnabled
 Determines whether the user is able to use the context menu or keyboard shortcuts to open the DevTools window.
@@ -91,7 +91,7 @@ Note: Not supported natively by WebView2, provided for compatibility.
 Determines whether new window requests are allowed or redirected to the same window.
 `object.AreBrowserPopupsAllowed[ = Value]`
 
-## Methods
+### Methods
 
 ##### Initialize
 Initializes the WebView2 control within a parent window.
@@ -325,7 +325,7 @@ Gives focus to the WebView control.
 Registers a script that will run automatically every time a new page loads.
 `object.AddInitializationScript(Script As String)`
 
-## Events
+### Events
 
 ##### OnMessageReceived
 Fired when a message or notification is sent from the library to AutoIt.
