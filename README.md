@@ -20,8 +20,84 @@ Due to changes in the COM Dispatch IDs (DispIds) for better organization, it is 
 
 
 
-  ---
-  ---
+---
+---
+
+### 📖 Understanding the WebDemo (v1.4)
+
+The **`WebDemo_v1.4.au3`** is not just a browser, 
+ it is a showcase of **Bi-directional Intelligence**. 
+ It demonstrates how AutoIt can "read" the DOM state via COM events to provide a context-specific user interface.
+
+#### 1. Context-Aware Menu (The "Right-Click" Magic)
+
+The demo intercepts the native context menu and replaces it with a dynamic AutoIt menu. The options change based on the **HTML element** under your cursor:
+
+- **📥 Table Intelligence**:
+    
+    - **Action**: Right-click anywhere inside a `<table>`.
+        
+    - **What happens**: The library detects the `tagName`, calculates the table's index via coordinates, and offers an **Export to CSV** option. It uses the `bridge.js` to scrape the data directly from the browser's memory.
+        
+- **📋 Form Automation**:
+    
+    - **Action**: Right-click on an `<input>`, `<textarea>`, or `<form>`.
+        
+    - **What happens**:
+        
+        - **Map Form to JSON**: Automatically crawls the form and generates a JSON file with all current values.
+            
+        - **Fill Form from JSON**: Lets you select a previously saved JSON file to instantly re-populate the form.
+            
+- **🔍 Smart Selection**:
+    
+    - **Action**: Highlight any text on the page and right-click.
+        
+    - **What happens**: The menu offers a Google Search for that specific string, using the new native `EncodeURI` method to handle special characters.
+        
+
+#### 2. Advanced Utilities
+
+- **📸 Full Page Screenshot**: Unlike standard screen captures, this utility renders the **entire document** (including the parts you need to scroll to see) and saves it as a high-quality PNG.
+    
+- **⚡ Persistent Bridge**: Notice that even if you navigate to a new website or refresh, the "Table Export" and "Form Mapping" still work. This is thanks to the new `AddInitializationScript` which ensures our `bridge.js` is part of every page's DNA.
+    
+
+---
+
+### ⚙️ How it Works: The "Context-JSON" Bridge
+
+The secret behind this intelligent menu is the seamless communication between the Browser's DOM and AutoIt's COM interface.
+
+#### The Workflow:
+
+1. **The Trigger**: When you right-click, the `bridge.js` (injected via `AddInitializationScript`) intercepts the event.
+    
+2. **Data Gathering**: It instantly gathers metadata about the element under the mouse (Coordinates, Tag Type, Selected Text, Image Sources, etc.).
+    
+3. **The Dispatch**: This metadata is packed into a **JSON string** and sent to AutoIt via the `OnContextMenu` event.
+    
+4. **The Decision**: AutoIt receives the JSON, parses it using `NetJson.Parser`, and decides which menu items to show.
+    
+
+#### Why JSON?
+
+- **Structure**: It allows passing multiple data points (X, Y, Tag, URL) in a single, organized string.
+    
+- **Performance**: By prefixing with `JSON:`, we bypass complex string encoding, making the communication near-instant.
+    
+- **Flexibility**: You can easily add more data points to the `bridge.js` without ever changing the core DLL.
+    
+
+---
+
+### 💡 Pro Tip for Developers:
+
+> "You can extend this! If you want to detect specifically if a user clicked on a **Video** or a **PDF link**, just update the `bridge.js` to include those tags. 
+
+
+---
+---
 
   
 # AutoIt WebView2 Component (COM Interop)
