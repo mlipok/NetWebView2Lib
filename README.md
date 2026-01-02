@@ -6,7 +6,7 @@ This version introduces significant architectural improvements, focusing on deep
 ### 🚀 Key Highlights
 
 * **Comprehensive Settings Control**: Direct access to browser behaviors via new properties. Toggle DevTools, Context Menus, Script Dialogs, and Browser Accelerators (`AreDevToolsEnabled`, `AreDefaultContextMenusEnabled`, etc.) directly from your AutoIt script.
-* **Permanent JS Injection**: Introducing `AddInitializationScript`. Injected JavaScript (like bridges or libraries) now persists across page navigations and refreshes automatically, managed via a new Script ID tracking system.
+* 🎯 **Permanent JS Injection**: Introducing `AddInitializationScript`. Injected JavaScript (like bridges or libraries) now persists across page navigations and refreshes automatically, managed via a new Script ID tracking system.
 * **Custom Context Menus**: Intercept right-clicks with the new `OnContextMenu` event. Receive rich JSON metadata including coordinates, element tags, selected text, and source URLs to build native-looking custom menus.
 * **Focus & Lifecycle Management**: Navigation is now fully observable through `OnNavigationStarting` and `OnNavigationCompleted`.
 * **Integrated Utilities**: Added native methods for `Encode/DecodeURI` and `Base64` (UTF-8) to handle data transfers between AutoIt and JavaScript seamlessly.
