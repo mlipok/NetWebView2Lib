@@ -1,3 +1,45 @@
+## AutoIt WebView2 Component (COM Interop)
+
+A powerful bridge that allows **AutoIt** to use the modern **Microsoft Edge WebView2** (Chromium) engine via a C# COM wrapper. This project enables you to render modern HTML5, CSS3, and JavaScript directly inside your AutoIt applications with a 100% event-driven architecture.
+
+---
+### 🚀 Key Features
+
+* **Chromium Engine**: Leverage the speed and security of modern Microsoft Edge.
+* **Bi-directional Communication**: Send messages from JS to AutoIt (`postMessage`) and execute JS from AutoIt (`ExecuteScript`).
+* **Event-Driven**: No more `While/Sleep` loops to check for updates. Uses COM Sinks for instant notifications.
+* **Advanced JSON Handling**: Includes a built-in `JsonParser` for deep-path data access (e.g., `user.items\[0].name`).
+* **Content Control**: Built-in Ad-blocker, CSS injection, and Zoom control.
+* **Dual Architecture**: Fully supports both **x86** and **x64** environments.
+- **Extension Support**: Load and use Chromium extensions (unpacked).
+- **Advanced Cookie & CDP Control**: Full cookie manipulation and raw access to Chrome DevTools Protocol.
+- **Kiosk & Security Mode**: Enhanced methods to restrict user interaction for production environments.
+
+---
+
+### 🛠 Prerequisites
+
+1. **.NET Framework 4.8** or higher.
+2. **Microsoft Edge WebView2 Runtime**.
+
+   * *The registration script will check for this and provide a download link if missing.*
+
+---
+### 📦 Deployment \& Installation
+
+1. **Extract** NetWebView2Lib folder to a permanent location.
+2. **Run**:
+    `\NetWebView2Lib\bin\Register_web2.au3` to Register
+   * Verifies the WebView2 Runtime presence.
+   * Registers `NetWebView2Lib.dll` for COM Interop on both 32-bit and 64-bit.
+     
+    or `\NetWebView2Lib\bin\Unregister.au3` to Unregister
+
+1. **Run `\Example\*`** to see the bridge in action.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" width="100%">
+</p>
 
 ## NetWebView2Lib v1.4.0 - Major Update
 
@@ -18,11 +60,9 @@ This version introduces significant architectural improvements, focusing on deep
 
 Due to changes in the COM Dispatch IDs (DispIds) for better organization, it is **highly recommended** to run the included `RegCleaner.au3` before registering the new version. This ensures that any stale registry entries from previous builds are purged, preventing "Object action failed" errors.
 
-
 <p align="center">
   <img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" width="100%">
 </p>
-
 
 ### 📖 Understanding the WebDemo (v1.4)
 
@@ -63,10 +103,9 @@ The demo intercepts the native context menu and replaces it with a dynamic AutoI
     
 - **⚡ Persistent Bridge**: Notice that even if you navigate to a new website or refresh, the "Table Export" and "Form Mapping" still work. This is thanks to the new `AddInitializationScript` which ensures our `bridge.js` is part of every page's DNA.
     
-
 ---
 
-### ⚙️ How it Works: The "Context-JSON" Bridge
+#### ⚙️ How it Works: The "Context-JSON" Bridge
 
 The secret behind this intelligent menu is the seamless communication between the Browser's DOM and AutoIt's COM interface.
 
@@ -92,62 +131,15 @@ The secret behind this intelligent menu is the seamless communication between th
 
 ---
 
-### 💡 Pro Tip for Developers:
+#### 💡 Pro Tip for Developers:
 
 > "You can extend this! If you want to detect specifically if a user clicked on a **Video** or a **PDF link**, just update the `bridge.js` to include those tags. 
-
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" width="100%">
 </p>
-
   
-# AutoIt WebView2 Component (COM Interop)
-
-A powerful bridge that allows **AutoIt** to use the modern **Microsoft Edge WebView2** (Chromium) engine via a C# COM wrapper. This project enables you to render modern HTML5, CSS3, and JavaScript directly inside your AutoIt applications with a 100% event-driven architecture.
-
----
-
-## 🚀 Key Features
-
-* **Chromium Engine**: Leverage the speed and security of modern Microsoft Edge.
-* **Bi-directional Communication**: Send messages from JS to AutoIt (`postMessage`) and execute JS from AutoIt (`ExecuteScript`).
-* **Event-Driven**: No more `While/Sleep` loops to check for updates. Uses COM Sinks for instant notifications.
-* **Advanced JSON Handling**: Includes a built-in `JsonParser` for deep-path data access (e.g., `user.items\[0].name`).
-* **Content Control**: Built-in Ad-blocker, CSS injection, and Zoom control.
-* **Dual Architecture**: Fully supports both **x86** and **x64** environments.
-- **Extension Support**: Load and use Chromium extensions (unpacked).
-- **Advanced Cookie & CDP Control**: Full cookie manipulation and raw access to Chrome DevTools Protocol.
-- **Kiosk & Security Mode**: Enhanced methods to restrict user interaction for production environments.
-
-
----
-
-## 🛠 Prerequisites
-
-1. **.NET Framework 4.8** or higher.
-2. **Microsoft Edge WebView2 Runtime**.
-
-   * *The registration script will check for this and provide a download link if missing.*
-
-
----
-## 📦 Deployment \& Installation
-
-1. **Extract** NetWebView2Lib folder to a permanent location.
-2. **Run**:
-    `\NetWebView2Lib\bin\Register_web2.au3` to Register
-   * Verifies the WebView2 Runtime presence.
-   * Registers `NetWebView2Lib.dll` for COM Interop on both 32-bit and 64-bit.
-     
-    or `\NetWebView2Lib\bin\Unregister.au3` to Unregister
-
-1. **Run `\Example\*`** to see the bridge in action.
-
-
----
-
-## 📖 NetWebView2Lib Version 1.4.0 - Reference (Quick View)
+## 📖 NetWebView2Lib Version 1.4.0 (Quick Reference)
 
 ### Properties
 
@@ -469,7 +461,7 @@ Fired when the browser loses focus.
 
 ---
 
-# JsonParser (ProgId: NetJson.Parser)
+### JsonParser (ProgId: NetJson.Parser)
 
 ## Methods
 
