@@ -9,7 +9,7 @@ using System.Windows.Forms;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 
-// --- Version 1.4.1 ---
+// --- Version 1.4.1.1 ---
 
 namespace NetWebView2Lib
 {
@@ -1377,13 +1377,13 @@ namespace NetWebView2Lib
                 // Use CleanJsString to handle escape characters and remove surrounding quotes
                 string cleanedText = CleanJsString(html);
 
-                // Send the result to AutoIt with the "Inner_Text|" prefix
-                OnMessageReceived?.Invoke("Inner_Text|" + cleanedText);
+                // Send the result to AutoIt with the "INNER_TEXT|" prefix
+                OnMessageReceived?.Invoke("INNER_TEXT|" + cleanedText);
             }
             catch (Exception ex)
             {
                 // Notify AutoIt in case of an execution error
-                OnMessageReceived?.Invoke("ERROR|GetInnerText: " + ex.Message);
+                OnMessageReceived?.Invoke("ERROR|INNER_TEXT_FAILED: " + ex.Message);
             }
         }
 
