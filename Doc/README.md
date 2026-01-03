@@ -1,10 +1,9 @@
-# AutoIt WebView2 Component (COM Interop)
+## AutoIt WebView2 Component (COM Interop)
 
 A powerful bridge that allows **AutoIt** to use the modern **Microsoft Edge WebView2** (Chromium) engine via a C# COM wrapper. This project enables you to render modern HTML5, CSS3, and JavaScript directly inside your AutoIt applications with a 100% event-driven architecture.
 
 ---
-
-## 🚀 Key Features
+### 🚀 Key Features
 
 * **Chromium Engine**: Leverage the speed and security of modern Microsoft Edge.
 * **Bi-directional Communication**: Send messages from JS to AutoIt (`postMessage`) and execute JS from AutoIt (`ExecuteScript`).
@@ -16,19 +15,17 @@ A powerful bridge that allows **AutoIt** to use the modern **Microsoft Edge WebV
 - **Advanced Cookie & CDP Control**: Full cookie manipulation and raw access to Chrome DevTools Protocol.
 - **Kiosk & Security Mode**: Enhanced methods to restrict user interaction for production environments.
 
-
 ---
 
-## 🛠 Prerequisites
+### 🛠 Prerequisites
 
 1. **.NET Framework 4.8** or higher.
 2. **Microsoft Edge WebView2 Runtime**.
 
    * *The registration script will check for this and provide a download link if missing.*
 
-
 ---
-## 📦 Deployment \& Installation
+### 📦 Deployment \& Installation
 
 1. **Extract** NetWebView2Lib folder to a permanent location.
 2. **Run**:
@@ -40,12 +37,122 @@ A powerful bridge that allows **AutoIt** to use the modern **Microsoft Edge WebV
 
 1. **Run `\Example\*`** to see the bridge in action.
 
+---
+### 🛠️ Migration Note (Important)
+
+Due to changes in the COM Dispatch IDs (DispIds) for better organization, it is **highly recommended** to run the included `RegCleaner.au3` before registering the new version. This ensures that any stale registry entries from previous builds are purged, preventing "Object action failed" errors.
+
+---
+### ⚖️ License
+
+This project is provided "as-is". You are free to use, modify, and distribute it for both personal and commercial projects.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" width="100%">
+</p>
+
+## NetWebView2Lib v1.4.0 - Major Update
+
+This version introduces significant architectural improvements, focusing on deep integration with WebView2 settings and a more robust event-driven system.
+
+### ✨ Key Highlights
+
+* **Comprehensive Settings Control**: Direct access to browser behaviors via new properties. Toggle DevTools, Context Menus, Script Dialogs, and Browser Accelerators (`AreDevToolsEnabled`, `AreDefaultContextMenusEnabled`, etc.) directly from your AutoIt script.
+  
+* 🎯 **Permanent JS Injection**: Introducing `AddInitializationScript`. Injected JavaScript (like bridges or libraries) now persists across page navigations and refreshes automatically, managed via a new Script ID tracking system.
+  
+* **Custom Context Menus**: Intercept right-clicks with the new `OnContextMenu` event. Receive rich JSON metadata including coordinates, element tags, selected text, and source URLs to build native-looking custom menus.
+  
+* **Focus & Lifecycle Management**: Navigation is now fully observable through `OnNavigationStarting` and `OnNavigationCompleted`.
+  
+* **Integrated Utilities**: Added native methods for `Encode/DecodeURI` and `Base64` (UTF-8) to handle data transfers between AutoIt and JavaScript seamlessly.
+  
+* **Enhanced State Sync**: Real-time events for Title, URL, and Zoom changes to keep your AutoIt GUI perfectly in sync with the browser state.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" width="100%">
+</p>
+
+### 📖 Understanding the WebDemo (v1.4)
+
+The **`WebDemo_v1.4.au3`** is not just a browser, 
+ it is a showcase of **Bi-directional Intelligence**. 
+ It demonstrates how AutoIt can "read" the DOM state via COM events to provide a context-specific user interface.
+
+#### 1. Context-Aware Menu (The "Right-Click" Magic)
+
+The demo intercepts the native context menu and replaces it with a dynamic AutoIt menu. The options change based on the **HTML element** under your cursor:
+
+- **📥 Table Intelligence**:
+    
+    - **Action**: Right-click anywhere inside a `<table>`.
+        
+    - **What happens**: The library detects the `tagName`, calculates the table's index via coordinates, and offers an **Export to CSV** option. It uses the `bridge.js` to scrape the data directly from the browser's memory.
+        
+- **📋 Form Automation**:
+    
+    - **Action**: Right-click on an `<input>`, `<textarea>`, or `<form>`.
+        
+    - **What happens**:
+        
+        - **Map Form to JSON**: Automatically crawls the form and generates a JSON file with all current values.
+            
+        - **Fill Form from JSON**: Lets you select a previously saved JSON file to instantly re-populate the form.
+            
+- **🔍 Smart Selection**:
+    
+    - **Action**: Highlight any text on the page and right-click.
+        
+    - **What happens**: The menu offers a Google Search for that specific string, using the new native `EncodeURI` method to handle special characters.
+        
+
+#### 2. Advanced Utilities
+
+- **📸 Full Page Screenshot**: Unlike standard screen captures, this utility renders the **entire document** (including the parts you need to scroll to see) and saves it as a high-quality PNG.
+    
+- **⚡ Persistent Bridge**: Notice that even if you navigate to a new website or refresh, the "Table Export" and "Form Mapping" still work. This is thanks to the new `AddInitializationScript` which ensures our `bridge.js` is part of every page's DNA.
+    
+---
+
+#### ⚙️ How it Works: The "Context-JSON" Bridge
+
+The secret behind this intelligent menu is the seamless communication between the Browser's DOM and AutoIt's COM interface.
+
+#### The Workflow:
+
+1. **The Trigger**: When you right-click, the `bridge.js` (injected via `AddInitializationScript`) intercepts the event.
+    
+2. **Data Gathering**: It instantly gathers metadata about the element under the mouse (Coordinates, Tag Type, Selected Text, Image Sources, etc.).
+    
+3. **The Dispatch**: This metadata is packed into a **JSON string** and sent to AutoIt via the `OnContextMenu` event.
+    
+4. **The Decision**: AutoIt receives the JSON, parses it using `NetJson.Parser`, and decides which menu items to show.
+    
+
+#### Why JSON?
+
+- **Structure**: It allows passing multiple data points (X, Y, Tag, URL) in a single, organized string.
+    
+- **Performance**: By prefixing with `JSON:`, we bypass complex string encoding, making the communication near-instant.
+    
+- **Flexibility**: You can easily add more data points to the `bridge.js` without ever changing the core DLL.
+    
 
 ---
 
-## 📖 NetWebView2Lib Version 1.4.0 - Reference (Quick View)
+#### 💡 Pro Tip for Developers:
 
-## Properties
+> "You can extend this! If you want to detect specifically if a user clicked on a **Video** or a **PDF link**, just update the `bridge.js` to include those tags. 
+
+
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" width="100%">
+</p>
+  
+## 📖 NetWebView2Lib Version 1.4.1 (Quick Reference)
+
+### Properties
 
 ##### AreDevToolsEnabled
 Determines whether the user is able to use the context menu or keyboard shortcuts to open the DevTools window.
@@ -91,7 +198,7 @@ Note: Not supported natively by WebView2, provided for compatibility.
 Determines whether new window requests are allowed or redirected to the same window.
 `object.AreBrowserPopupsAllowed[ = Value]`
 
-## Methods
+### Methods
 
 ##### Initialize
 Initializes the WebView2 control within a parent window.
@@ -325,7 +432,7 @@ Gives focus to the WebView control.
 Registers a script that will run automatically every time a new page loads.
 `object.AddInitializationScript(Script As String)`
 
-## Events
+### Events
 
 ##### OnMessageReceived
 Fired when a message or notification is sent from the library to AutoIt.
@@ -365,9 +472,9 @@ Fired when the browser loses focus.
 
 ---
 
-# JsonParser (ProgId: NetJson.Parser)
+### JsonParser (ProgId: NetJson.Parser)
 
-## Methods
+#### Methods
 
 ##### Parse
 Parses a JSON string. Automatically detects if it's an Object or an Array.
@@ -421,11 +528,39 @@ Returns the JSON string with nice formatting (Indented).
 Minifies a JSON string (removes spaces and new lines).
 `string GetMinifiedJson()`
 
----
+##### Merge
+ Performs a deep merge of a new JSON string into the existing structure. Uses `Union` strategy for arrays to prevent duplicates.
+ `Merge(string jsonContent)`
+ 
+##### MergeFromFile
+Efficiently reads a JSON file from disk and merges it directly into the current session.
+`MergeFromFile(string filePath)`
 
-## ⚖️ License
+##### GetTokenType
+Returns the .NET/Newtonsoft type of a specific node (e.g., _Object, Array, String, Integer, Boolean_). Essential for dynamic data validation.
+`GetTokenType(string path)`
 
-This project is provided "as-is". You are free to use, modify, and distribute it for both personal and commercial projects.
+##### RemoveToken
+Allows dynamic deletion of specific keys or array elements, providing full CRUD (Create, Read, Update, Delete) capabilities
+`RemoveToken(string path)`
+
+##### Search
+Executes a JSONPath query and returns a JSON array of all matching tokens. Enables powerful filtering and deep searching with a single call.
+`Search(string query)`
+
+##### Flatten
+Flattens the JSON structure into a single-level object with dot-notated paths.
+`Flatten()`
+
+##### CloneTo
+Clones the current JSON data to another named parser instance.
+`CloneTo(string parserName)`
+
+
+##### FlattenToTable
+Flattens the JSON structure into a table-like string with specified delimiters.
+`FlattenToTable(string colDelim, string rowDelim)`
+
 
 ---
 

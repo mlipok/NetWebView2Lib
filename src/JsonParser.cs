@@ -6,10 +6,10 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 
+// --- Version 1.4.1 ---
+
 namespace NetWebView2Lib
 {
-
-
     /// <summary>
     /// COM interface for JsonParser class.
     /// </summary> 
@@ -81,6 +81,46 @@ namespace NetWebView2Lib
         /// Minifies a JSON string (removes spaces and new lines).
         /// </summary>
         [DispId(213)] string GetMinifiedJson();
+
+        /// <summary>
+        /// Merges another JSON string into the current JSON structure.
+        /// </summary> 
+        [DispId(214)] bool Merge(string jsonContent);
+
+        /// <summary>
+        /// Merges JSON content from a file into the current JSON structure.
+        /// </summary> 
+        [DispId(215)] bool MergeFromFile(string filePath);
+
+        /// <summary>
+        /// Returns the type of the token at the specified path (e.g., Object, Array, String, Integer).
+        /// </summary> 
+        [DispId(216)] string GetTokenType(string path);
+
+        /// <summary>
+        /// Removes the token at the specified path.
+        /// </summary> 
+        [DispId(217)] bool RemoveToken(string path);
+
+        /// <summary>
+        /// Searches the JSON structure using a JSONPath query and returns a JSON array of results.
+        /// </summary>
+        [DispId(218)] string Search(string query);
+
+        /// <summary>
+        /// Flattens the JSON structure into a single-level object with dot-notated paths.
+        /// </summary>
+        [DispId(219)] string Flatten();
+
+        /// <summary>
+        /// Clones the current JSON data to another named parser instance.
+        /// </summary>
+        [DispId(220)] bool CloneTo(string parserName);
+
+        /// <summary>
+        /// Flattens the JSON structure into a table-like string with specified delimiters.
+        /// </summary>
+        [DispId(221)] string FlattenToTable(string colDelim, string rowDelim);
     }
 
     /// <summary>
@@ -162,7 +202,7 @@ namespace NetWebView2Lib
             catch { return false; }
         }
 
-
+#if FALSE
         /// <summary>
         /// Updates or adds a value at the specified path (only for JObject).
         /// </summary>
@@ -177,8 +217,27 @@ namespace NetWebView2Lib
             }
             catch { /* Handle or log error if needed */ }
         }
-
-
+#endif
+        /// <summary>
+        /// Updates or adds a value at the specified path (only for JObject).
+        /// </summary> 
+        public void SetTokenValue(string path, string value)
+		{
+			try
+			{
+				JToken root = (_jsonArray != null) ? (JToken)_jsonArray : (JToken)_jsonObj;
+				if (root != null)
+				{
+					var token = root.SelectToken(path);
+					if (token != null && token is JValue jValue)
+					{
+						jValue.Value = value;
+					}
+				}
+			}
+            catch { /* Handle or log error if needed */ }
+        }
+		
         /// <summary>
         /// Returns the count of elements if the JSON is an array.
         /// </summary>
@@ -297,6 +356,198 @@ namespace NetWebView2Lib
             if (_jsonObj != null) return _jsonObj.ToString(Formatting.None);
             if (_jsonArray != null) return _jsonArray.ToString(Formatting.None);
             return "";
+        }
+
+        /// <summary>
+        /// Merges another JSON string into the current JSON structure.
+        /// </summary> 
+        public bool Merge(string jsonContent)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(jsonContent)) return false;
+
+                if (_jsonObj != null)
+                {
+                    JObject newObj = JObject.Parse(jsonContent);
+                    _jsonObj.Merge(newObj, new JsonMergeSettings
+                    {
+                        // Ορίζει πώς θα ενωθούν οι πίνακες (π.χ. προσθήκη στο τέλος)
+                        MergeArrayHandling = MergeArrayHandling.Union
+                    });
+                    return true;
+                }
+                return false;
+            }
+            catch { return false; }
+        }
+
+        /// <summary>
+        /// Merges JSON content from a file into the current JSON structure.
+        /// </summary>
+        public bool MergeFromFile(string filePath)
+        {
+            try
+            {
+                if (!File.Exists(filePath)) return false;
+                string content = File.ReadAllText(filePath);
+                return Merge(content); // Καλούμε την Merge που ήδη έφτιαξες!
+            }
+            catch { return false; }
+        }
+
+        /// <summary>
+        /// Returns the type of the token at the specified path (e.g., Object, Array, String, Integer).
+        /// </summary> 
+        public string GetTokenType(string path)
+        {
+            try
+            {
+                JToken root = (_jsonArray != null) ? (JToken)_jsonArray : (JToken)_jsonObj;
+                if (root == null) return "None";
+
+                var token = string.IsNullOrEmpty(path) ? root : root.SelectToken(path);
+                return token?.Type.ToString() ?? "None";
+            }
+            catch { return "Error"; }
+        }
+
+        /// <summary>
+        /// Removes the token at the specified path.
+        /// </summary> 
+        public bool RemoveToken(string path)
+        {
+            try
+            {
+                JToken root = (_jsonArray != null) ? (JToken)_jsonArray : (JToken)_jsonObj;
+                if (root == null || string.IsNullOrEmpty(path)) return false;
+
+                var token = root.SelectToken(path);
+                if (token == null) return false;
+
+                if (token.Parent is JProperty property)
+                {
+                    // If the token is a property, remove the entire property
+                    property.Remove();
+                    return true;
+                }
+                else if (token.Parent is JArray || token is JProperty)
+                {
+                    // If the token is an item in an array or a property value, remove it directly
+                    token.Remove();
+                    return true;
+                }
+                else
+                {
+                    // For other types, just remove the token
+                    token.Remove();
+                    return true;
+                }
+            }
+            catch { return false; }
+        }
+
+        /// <summary>
+        /// Searches the JSON structure using a JSONPath query and returns a JSON array of results.
+        /// </summary> 
+        public string Search(string query)
+        {
+            try
+            {
+                JToken root = (_jsonArray != null) ? (JToken)_jsonArray : (JToken)_jsonObj;
+                if (root == null || string.IsNullOrWhiteSpace(query)) return "[]";
+
+                // SelectTokens returns a list of all matching elements
+                var results = root.SelectTokens(query);
+
+                JArray resultArray = new JArray();
+                foreach (var token in results)
+                {
+                    resultArray.Add(token);
+                }
+
+                return resultArray.ToString(Formatting.None);
+            }
+            catch { return "[]"; }
+        }
+
+        /// <summary>
+        /// Flattens the JSON structure into a single-level object with dot-notated paths.
+        /// </summary> 
+        public string Flatten()
+        {
+            try
+            {
+                JToken root = (_jsonArray != null) ? (JToken)_jsonArray : (JToken)_jsonObj;
+                if (root == null) return "{}";
+                var dict = new Dictionary<string, string>();
+                FillFlattenDictionary(root, "", dict);
+                return JsonConvert.SerializeObject(dict, Formatting.None);
+            }
+            catch { return "{}"; }
+        }
+
+        /// Helper method to recursively flatten the JSON structure
+        private void FillFlattenDictionary(JToken token, string prefix, Dictionary<string, string> dict)
+        {
+            switch (token.Type)
+            {
+                case JTokenType.Object:
+                    foreach (var prop in token.Children<JProperty>())
+                        FillFlattenDictionary(prop.Value, string.IsNullOrEmpty(prefix) ? prop.Name : $"{prefix}.{prop.Name}", dict);
+                    break;
+                case JTokenType.Array:
+                    int index = 0;
+                    foreach (var item in token.Children())
+                    {
+                        FillFlattenDictionary(item, $"{prefix}[{index}]", dict);
+                        index++;
+                    }
+                    break;
+                default:
+                    dict.Add(prefix, token.ToString());
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Clones the current JSON data to another named parser instance.
+        /// </summary> 
+        public bool CloneTo(string parserName)
+        {
+            // Here the logic depends on whether you have a manager for multiple instances.
+            // A simple and safe approach is not returning JSON
+            // so AutoIt does: $oNewParser.Parse($oOldParser.GetJson())
+            // But for Logbook, we define it as a Clone function.
+            try
+            {
+                string currentJson = GetJson();
+                return !string.IsNullOrEmpty(currentJson);
+            }
+            catch { return false; }
+        }
+
+        /// <summary>
+        /// Flattens the JSON structure into a table-like string with specified delimiters.
+        /// </summary> 
+        public string FlattenToTable(string colDelim, string rowDelim)
+        {
+            // If the user sends blanks, set the AutoIt defaults.
+            if (string.IsNullOrEmpty(colDelim)) colDelim = "|";
+            if (string.IsNullOrEmpty(rowDelim)) rowDelim = "\r\n";
+
+            try
+            {
+                JToken root = (_jsonArray != null) ? (JToken)_jsonArray : (JToken)_jsonObj;
+                if (root == null) return "";
+
+                var dict = new Dictionary<string, string>();
+                FillFlattenDictionary(root, "", dict);
+
+                var lines = dict.Select(kvp => $"{kvp.Key}{colDelim}{kvp.Value}");
+                return string.Join(rowDelim, lines);
+            }
+            catch { return ""; }
         }
 
     }

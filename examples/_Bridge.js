@@ -432,3 +432,96 @@ function submitToAutoIt() {
     // Reset form after sending
     document.getElementById('contactForm').reset();
 }
+
+// =======================================================================================================
+// GOG Enhancer Logic
+// =======================================================================================================
+
+/**
+ * Applies filters based on the JSON data provided by AutoIt.
+ * @param {string} jsonData - The JSON string from NetJson.Parser
+ */
+function applyGOGFilters(jsonData) {
+    if (!jsonData) return;
+    
+    // Save to global window variable so setInterval can reuse it during scrolling
+    window.lastGogData = jsonData;
+
+    try {
+        const data = JSON.parse(jsonData);
+        
+        // Target GOG game tiles
+        const tiles = document.querySelectorAll('.product-tile, .big-spot, .product-row');
+
+        tiles.forEach(tile => {
+            const titleEl = tile.querySelector('.product-tile__title, .big-spot__title, .product-row__title');
+            if (!titleEl) return;
+
+            const title = titleEl.innerText.trim();
+
+            // 1. Blacklist (Hide)
+            if (data.Blacklist && data.Blacklist.includes(title)) {
+                tile.style.display = 'none';
+            } 
+            // 2. Owned (Fade/Grayscale)
+            else if (data.Owned && data.Owned.includes(title)) {
+                tile.style.opacity = '0.25';
+                tile.style.filter = 'grayscale(100%) brightness(0.7)';
+                tile.style.pointerEvents = 'none'; 
+            } 
+            // 3. Watchlist (Highlight)
+            else if (data.Watchlist && data.Watchlist.includes(title)) {
+                tile.style.border = '2px solid #ffc400';
+                tile.style.backgroundColor = 'rgba(255, 196, 0, 0.05)';
+                tile.style.boxShadow = 'inset 0 0 15px rgba(255, 196, 0, 0.2)';
+            }
+        });
+        
+        console.log("GOG Filters Applied Successfully");
+    } catch (e) {
+        console.error("Error applying GOG filters:", e);
+    }
+}
+
+/**
+ * Automation: Re-apply filters every 2 seconds to catch new games 
+ * that appear during infinite scrolling.
+ */
+setInterval(() => {
+    if (window.lastGogData) { 
+        applyGOGFilters(window.lastGogData); 
+    }
+}, 2000);
+
+// =======================================================================================================
+// CONTEXT MENU SENSOR
+// =======================================================================================================
+window.addEventListener('contextmenu', function (e) {
+    // 1. Ψάχνουμε το tile ή οποιοδήποτε link που μοιάζει με παιχνίδι
+    let tile = e.target.closest('.product-tile, .big-spot, .product-row, .product-card, a[href*="/game/"]');
+    let gameTitle = "";
+    
+    if (tile) {
+        // Προσπάθεια 1: Από τα γνωστά classes τίτλων
+        let titleEl = tile.querySelector('.product-tile__title, .big-spot__title, .product-row__title, .product-card__title');
+        if (titleEl) {
+            gameTitle = titleEl.innerText.trim();
+        } 
+        // Προσπάθεια 2: Αν κάναμε κλικ σε link, παίρνουμε το τελευταίο κομμάτι του URL
+        else if (tile.href && tile.href.includes('/game/')) {
+            let parts = tile.href.split('/');
+            gameTitle = parts[parts.length - 1].replace(/_/g, ' '); // π.χ. resident_evil_bundle -> resident evil bundle
+        }
+    }
+
+    const menuData = {
+        x: e.clientX,
+        y: e.clientY,
+        kind: gameTitle ? "GOG_Game" : "Page",
+        tagName: e.target.tagName,
+        link: e.target.closest('a') ? e.target.closest('a').href : "",
+        selection: gameTitle || window.getSelection().toString()
+    };
+
+    window.chrome.webview.postMessage("JSON:" + JSON.stringify(menuData));
+});

@@ -9,7 +9,7 @@ using System.Windows.Forms;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 
-// --- Version 1.4.0 ---
+// --- Version 1.4.1 ---
 
 namespace NetWebView2Lib
 {
@@ -219,6 +219,11 @@ namespace NetWebView2Lib
         [DispId(183)] bool AreBrowserPopupsAllowed { get; set; }
         /// <summary>Add a script that executes on every page load (Permanent Injection).</summary>
         [DispId(184)] void AddInitializationScript(string script);
+
+        // --- DATA EXTRACTION & SCRAPING ---
+
+        /// <summary>Get the inner text of the entire document.</summary>
+        [DispId(200)] void GetInnerText();
     }
 
     // --- 3. THE MANAGER CLASS ---
@@ -1354,5 +1359,33 @@ namespace NetWebView2Lib
             if (_webView.InvokeRequired) _webView.Invoke(action);
             else action();
         }
+
+        // --- NEW SECTION: DATA EXTRACTION ---
+
+        /// <summary>
+        /// Retrieves the entire text content (innerText) of the document and sends it back to AutoIt.
+        /// </summary>
+        public async void GetInnerText()
+        {
+            if (_webView?.CoreWebView2 == null) return;
+
+            try
+            {
+                // ExecuteScriptAsync returns the result as a JSON-encoded string (including quotes)
+                string html = await _webView.CoreWebView2.ExecuteScriptAsync("document.documentElement.innerText");
+
+                // Use CleanJsString to handle escape characters and remove surrounding quotes
+                string cleanedText = CleanJsString(html);
+
+                // Send the result to AutoIt with the "Inner_Text|" prefix
+                OnMessageReceived?.Invoke("Inner_Text|" + cleanedText);
+            }
+            catch (Exception ex)
+            {
+                // Notify AutoIt in case of an execution error
+                OnMessageReceived?.Invoke("ERROR|GetInnerText: " + ex.Message);
+            }
+        }
+
     }
 }

@@ -6,6 +6,7 @@
 #include <SQLite.au3>
 #include "_WV2_ExtensionPicker.au3"
 
+; WebDemo_v1.4.au3
 ; VERSION: 1.4.0
 
 OnAutoItExitRegister("_ExitApp")
@@ -17,8 +18,8 @@ Global $hGUI, $Bar
 Global $g_sProfilePath = @ScriptDir & "\UserDataFolder"
 Global $g_bURLFullSelected = 0
 Global $g_bHighlight = 0
-Global $g_iScreenshotStep = 0 ; 0=Idle, 1=Waiting Metrics, 2=Waiting SetMetrics, 3=Waiting Capture
-Global $g_sSavePath = ""
+;~ Global $g_iScreenshotStep = 0 ; 0=Idle, 1=Waiting Metrics, 2=Waiting SetMetrics, 3=Waiting Capture
+;~ Global $g_sSavePath = ""
 
 _MainGUI()
 
@@ -35,8 +36,6 @@ Func _MainGUI() ; Create the Main GUI
 
 	; 2. Initialize the COM Objects
 	_Web_ObjectsInit($g_sProfilePath)
-
-	SetupWebView2Features($oWeb)
 
 	; Set the starting URL
 	Local $sURL = "https://www.google.com" ; "http://localhost"
@@ -200,36 +199,28 @@ Func _Web_ObjectsInit($sProfilePath = @ScriptDir & "\UserDataFolder") ; Create t
 	; $oWeb.Initialize(($hGUI), $sProfilePath, 0, 0, 1000, 800)
 	$oWeb.Initialize(($hGUI), $sProfilePath, 0, 25, 1000, 775)
 
-
 	; Make a Basic ToolBar for Browsing navigation
 	Local $sExtra = "Google, AutoIt, wikipedia, demoqa, microsoft, -,Show_All_Tables, Download_All, -, " & _
 			"Highlights, EnableCustomMenu, EnableNativeMenu, ClearBrowserData, -, Ghostery, DarkReader"
 	$Bar = _Web_MakeBar($hGUI, $sExtra, 1)
-
-
-	If Not FileExists($sProfilePath & "\EBWebView\initialized") Then
-		; E. show Welcome page Wait for the engine to be ready before navigating
-		Local $sWelcomeHTML = _
-				'<html><title>Welcome</title><head><style>' & _
-				'body { background-color: #1E1E1E; color: white; font-family: "Segoe UI", sans-serif; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; }' & _
-				'.loader { border: 4px solid #333; border-top: 4px solid #2196F3; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 20px; }' & _
-				'@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }' & _
-				'h2 { font-weight: 300; letter-spacing: 1px; }' & _
-				'</style></head><body>' & _
-				'<div class="loader"></div>' & _
-				'<h2>Initializing WebView2 Engine</h2>' & _
-				'<p style="color: #888;">Setting up your profile folder...</p>' & _
-				'</body></html>'
-
-		$oWeb.NavigateToString($sWelcomeHTML)
-		FileWrite($sProfilePath & "\EBWebView\initialized", "NetWebView2.Manager initialized")
-	EndIf
 
 	; E. Wait for the engine to be ready before navigating
 	Do
 		Sleep(50)
 	Until $oWeb.IsReady
 
+	; Set Browser Setting
+	$oWeb.BackColor = "0x2B2B2B" ; Dark Background (Dark Mode)
+	$oWeb.BorderStyle = 1 ; FixedSingle frame
+	$oWeb.AreDevToolsEnabled = True ; Enable F12 for debugging
+	$oWeb.AreDefaultContextMenusEnabled = False ; Disable Edge's right-click
+	$oWeb.AreBrowserAcceleratorKeysEnabled = False ; Disable Ctrl+P, F5 etc.
+	$oWeb.ZoomFactor = 1.25 ; Set the zoom to 125%
+
+	; Inject external JavaScript Lib file to the memory
+	Local $sBridge = FileRead(@ScriptDir & "\_Bridge.js")
+	$oWeb.AddInitializationScript($sBridge)
+	ConsoleWrite("_Bridge.js script registered." & @CRLF)
 	ConsoleWrite("WebView2 is Ready for Navigating..." & @CRLF)
 EndFunc   ;==>_Web_ObjectsInit
 ;---------------------------------------------------------------------------------------
@@ -308,23 +299,6 @@ Func WM_COMMAND($hWnd, $iMsg, $wParam, $lParam) ; Register the WM_COMMAND messag
 	EndSwitch
 	Return $GUI_RUNDEFMSG
 EndFunc   ;==>WM_COMMAND
-;---------------------------------------------------------------------------------------
-Func SetupWebView2Features(ByRef $oWebView)
-	; 1. Appearance Setting
-	$oWebView.BackColor = "0x2B2B2B" ; Dark Background (Dark Mode)
-	$oWebView.BorderStyle = 1 ; FixedSingle frame
-
-	; 2. Permissions & Security Control
-	$oWebView.AreDevToolsEnabled = True ; Enable F12 for debugging
-	$oWebView.AreDefaultContextMenusEnabled = False ; Disable Edge's right-click
-	$oWebView.AreBrowserAcceleratorKeysEnabled = False ; Disable Ctrl+P, F5 etc.
-
-	; 3. Zoom Setting
-	$oWebView.ZoomFactor = 1.25 ; Set the zoom to 125%
-
-	; 4. Focus
-	$oWebView.WebViewSetFocus() ; Automatically focus the browser
-EndFunc   ;==>SetupWebView2Features
 ;---------------------------------------------------------------------------------------
 Func SetBridgeTheme($bEnabled = True, $iColor = 0xFFD800, $iSize = 4, $nOpacity = 0.7, $iDuration = 1200)
 	Local $iR = BitAND(BitShift($iColor, 16), 0xFF)
@@ -537,14 +511,7 @@ Func WebEvents_OnMessageReceived($sMessage) ; Listen for Events (WebView2 Manage
 		Case "INIT_READY"
 			; COM_TEST
 			; $oWeb.ExecuteScript('window.chrome.webview.postMessage(JSON.stringify({ "type": "COM_TEST", "status": "OK" }));')
-			$oWeb.ExecuteScript('window.chrome.webview.postMessage("COM_TEST|hello world from JavaScript");') ; LEGACY PROCESSING
-			ConsoleWrite("-  Switching to Custom Menu (AutoIt Mode)" & @CRLF)
-			$oWeb.SetContextMenuEnabled(False)
-
-			; Inject external JavaScript Lib file to the memory
-			Local $sBridge = FileRead(@ScriptDir & "\_Bridge.js")
-			$oWeb.AddInitializationScript($sBridge)
-			ConsoleWrite("-  _Bridge.js script registered." & @CRLF)
+			$oWeb.ExecuteScript('window.chrome.webview.postMessage("COM_TEST|hello from JavaScript");') ; LEGACY PROCESSING
 
 		Case "NAV_STARTING"
 			$oWeb.ExecuteScript("startProgress(20);") ; Page Progress indicator
@@ -552,6 +519,7 @@ Func WebEvents_OnMessageReceived($sMessage) ; Listen for Events (WebView2 Manage
 		Case "NAV_COMPLETED"
 			; also available as WebEvents_OnNavigationCompleted()
 			$oWeb.ExecuteScript("finalizeProgress();")
+			$oWeb.WebViewSetFocus()
 
 		Case "URL_CHANGED"
 			If $aParts[0] > 1 Then
@@ -567,58 +535,7 @@ Func WebEvents_OnMessageReceived($sMessage) ; Listen for Events (WebView2 Manage
 			EndIf
 
 		Case "CDP_RESULT"
-;~ 			Local $sMethod = $aParts[2]
-			Local $sData = $aParts[3]
-			Local $oParser = ObjCreate("NetJson.Parser")
-
-			; If the result contains an error field (common in CDP when something fails)
-			If StringInStr($sData, '"error":') Then
-				_Web_Notify("CDP Error detected. Resetting state.", "error")
-				$g_iScreenshotStep = 0
-				Return
-			EndIf
-
-			Switch $g_iScreenshotStep
-				Case 1 ; Received Metrics, now set Device Override
-					$oParser.Parse($sData)
-					Local $iW = $oParser.GetTokenValue("contentSize.width")
-					Local $iH = $oParser.GetTokenValue("contentSize.height")
-
-					$g_iScreenshotStep = 2 ; Next state
-					Local $sParams = StringFormat('{"width":%d, "height":%d, "deviceScaleFactor":1, "mobile":false}', $iW, $iH)
-					$oWeb.CallDevToolsProtocolMethod("Emulation.setDeviceMetricsOverride", $sParams)
-
-				Case 2 ; Metrics applied, now take the actual Screenshot
-					$g_iScreenshotStep = 3 ; Next state
-					Sleep(500) ; Give the browser half a second to render the full height
-					Local $sCapParams = '{"format": "png", "fromSurface": true}'
-					$oWeb.CallDevToolsProtocolMethod("Page.captureScreenshot", $sCapParams)
-
-				Case 3 ; Received Screenshot Data
-					; 1. WARNING: $sData contains {"data":"iVBOR..."}.
-					; We need to get ONLY what is between "data":" and "
-					Local $aMatch = StringRegExp($sData, '"data":"([^"]+)"', 1)
-
-					If Not @error Then
-						Local $sCleanBase64 = $aMatch[0]
-						_WinAPI_Base64Decode($sCleanBase64, $g_sSavePath)
-						Local $iSize = FileGetSize($g_sSavePath)
-						ConsoleWrite("-  Final Screenshot File Size: " & $iSize & " bytes" & @CRLF)
-
-						If $iSize > 1000 Then
-							_Web_Notify("Full Page Captured!", "success")
-							ShellExecute($g_sSavePath) ; Optional: open the photo immediately
-						Else
-							_Web_Notify("File is too small. Check Layout Metrics.", "error")
-						EndIf
-					Else
-						ConsoleWrite("!  Error: Could not find 'data' property in JSON." & @CRLF)
-					EndIf
-
-					; 3. Cleanup
-					$oWeb.CallDevToolsProtocolMethod("Emulation.clearDeviceMetricsOverride", "{}")
-					$g_iScreenshotStep = 0
-			EndSwitch
+			_HandleScreenshotSequence($aParts[2], $aParts[3])
 
 		Case "ERROR", "NAV_ERROR"
 			ConsoleWrite("!   Status: Error " & ($aParts[0] > 1) ? $aParts[2] : "Unknown" & @CRLF)
@@ -656,9 +573,11 @@ Func WebEvents_OnContextMenu($sJsonData) ; Listen for Events of the context menu
 		Case "SelectedText"
 			_GUICtrlMenu_AddMenuItem($hMenu, "Copy Selection", 1001)
 			_GUICtrlMenu_AddMenuItem($hMenu, "🔍 Search Google for: '" & StringLeft($sSelection, 15) & "...'", 1002)
+			_GUICtrlMenu_AddMenuItem($hMenu, "") ; separator
 		Case "Image"
 			_GUICtrlMenu_AddMenuItem($hMenu, "💾 Save Image As...", 1003)
 			_GUICtrlMenu_AddMenuItem($hMenu, "Copy Image URL", 1005)
+			_GUICtrlMenu_AddMenuItem($hMenu, "") ; separator
 		Case Else
 			; _GUICtrlMenu_AddMenuItem($hMenu, "Reload Page", 1004)
 	EndSwitch
@@ -666,15 +585,16 @@ Func WebEvents_OnContextMenu($sJsonData) ; Listen for Events of the context menu
 	; Dynamic menu example
 	Switch $sTagName
 		Case "TABLE"
-			_GUICtrlMenu_AddMenuItem($hMenu, "") ; separator
 			_GUICtrlMenu_AddMenuItem($hMenu, "📥 Table Export", 1006)
+			_GUICtrlMenu_AddMenuItem($hMenu, "") ; separator
 		Case "INPUT", "FORM", "TEXTAREA"
 			_GUICtrlMenu_AddMenuItem($hMenu, "") ; separator
 			_GUICtrlMenu_AddMenuItem($hMenu, "📋 Map Form to JSON", 1007)
 			_GUICtrlMenu_AddMenuItem($hMenu, "📥 Fill Form from JSON", 1008)
+			_GUICtrlMenu_AddMenuItem($hMenu, "") ; separator
 	EndSwitch
 
-	_GUICtrlMenu_AddMenuItem($hMenu, "") ; separator
+;~ 	_GUICtrlMenu_AddMenuItem($hMenu, "") ; separator
 	_GUICtrlMenu_AddMenuItem($hMenu, "Reload Page", 1004)
 	_GUICtrlMenu_AddMenuItem($hMenu, "Full Page Screenshot", 1009)
 
@@ -726,7 +646,7 @@ Func WebEvents_OnContextMenu($sJsonData) ; Listen for Events of the context menu
 			If IsObj($oWeb) Then $sTitle = $oWeb.GetDocumentTitle()
 			$sTitle = StringRegExpReplace($sTitle, '[\\/:*?"<>|]', "_")
 			$sSavePath = @ScriptDir & "\" & $sTitle & "_Screenshot.png"
-			_StartCaptureProcess($sSavePath)
+			_HandleScreenshotSequence("Screenshot", $sSavePath)
 
 	EndSwitch
 
@@ -753,11 +673,62 @@ Func _WinAPI_Base64Decode($sB64String, $FilePath = -1)
 	Return $bString
 EndFunc   ;==>_WinAPI_Base64Decode
 
-Func _StartCaptureProcess($sFilePath)
-	$g_sSavePath = $sFilePath
-	$g_iScreenshotStep = 1 ; Set state: Waiting for Metrics
-	$oWeb.CallDevToolsProtocolMethod("Page.getLayoutMetrics", "{}")
-EndFunc   ;==>_StartCaptureProcess
+Func _HandleScreenshotSequence($sMethod, $sData)
+    Local Static $sSavePath = "", $bProcessing = False
+
+    ; If we start the process now
+    If $sMethod = "Screenshot" Then
+        $bProcessing = True
+        $sSavePath = $sData ; Here $sData is the FilePath
+    EndIf
+
+    ; Check for Errors or if the call is irrelevant (we are not in Processing)
+    If Not $bProcessing Then Return ; We ignore CDP messages if we have not started a screenshot
+
+    If StringInStr($sData, '"error":') Then
+        _Web_Notify("CDP Error in: " & $sMethod, "error")
+        $bProcessing = False ; Reset state
+        Return
+    EndIf
+
+	Local $oParser
+    Switch $sMethod
+        Case "Screenshot" ; Start: $sData = FilePath
+            $oWeb.CallDevToolsProtocolMethod("Page.getLayoutMetrics", "{}")
+
+        Case "Page.getLayoutMetrics" ; We received Metrics
+            $oParser = ObjCreate("NetJson.Parser")
+            $oParser.Parse($sData)
+            Local $iW = $oParser.GetTokenValue("contentSize.width")
+            Local $iH = $oParser.GetTokenValue("contentSize.height")
+
+            Local $sParams = StringFormat('{"width":%d, "height":%d, "deviceScaleFactor":1, "mobile":false}', $iW, $iH)
+            $oWeb.CallDevToolsProtocolMethod("Emulation.setDeviceMetricsOverride", $sParams)
+
+        Case "Emulation.setDeviceMetricsOverride" ; Override applied
+            Sleep(500) ; Time for rendering
+            $oWeb.CallDevToolsProtocolMethod("Page.captureScreenshot", '{"format": "png", "fromSurface": true}')
+
+        Case "Page.captureScreenshot" ; received the Base64
+			$oParser = ObjCreate("NetJson.Parser")
+            $oParser.Parse($sData)
+            Local $sCleanBase64 = $oParser.GetTokenValue("data")
+
+			If $sCleanBase64 <> "" Then
+                _WinAPI_Base64Decode($sCleanBase64, $sSavePath)
+                _Web_Notify("Full Page Captured!", "success")
+                ShellExecute($sSavePath)
+            Else
+                _Web_Notify("Capture Error: No data received", "error")
+            EndIf
+
+            ; Cleanup & Finish
+            $oWeb.CallDevToolsProtocolMethod("Emulation.clearDeviceMetricsOverride", "{}")
+            $sSavePath = ""
+            $bProcessing = False
+
+    EndSwitch
+EndFunc
 
 ; ===============================================================================================================================
 ; Function Name:    _TableExportAsCSV
