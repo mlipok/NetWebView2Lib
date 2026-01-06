@@ -121,6 +121,12 @@ namespace NetWebView2Lib
         /// Flattens the JSON structure into a table-like string with specified delimiters.
         /// </summary>
         [DispId(221)] string FlattenToTable(string colDelim, string rowDelim);
+        /// <summary>Encodes a string for Base64.</summary>
+        [DispId(222)] string EncodeB64(string plainText);
+        /// <summary>Decodes a Base64 string.</summary>
+        [DispId(223)] string DecodeB64(string base64Text);
+        /// <summary>Decodes a Base64 string and saves it directly to a file.</summary>
+        [DispId(224)] bool DecodeB64ToFile(string base64Text, string filePath);
     }
 
     /// <summary>
@@ -548,6 +554,36 @@ namespace NetWebView2Lib
                 return string.Join(rowDelim, lines);
             }
             catch { return ""; }
+        }
+
+        public string EncodeB64(string plainText)
+        {
+            if (string.IsNullOrEmpty(plainText)) return "";
+            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(plainText);
+            return Convert.ToBase64String(bytes);
+        }
+
+        public string DecodeB64(string base64Text)
+        {
+            if (string.IsNullOrEmpty(base64Text)) return "";
+            try
+            {
+                byte[] bytes = Convert.FromBase64String(base64Text);
+                return System.Text.Encoding.UTF8.GetString(bytes);
+            }
+            catch { return ""; }
+        }
+
+        public bool DecodeB64ToFile(string base64Text, string filePath)
+        {
+            if (string.IsNullOrEmpty(base64Text) || string.IsNullOrEmpty(filePath)) return false;
+            try
+            {
+                byte[] bytes = Convert.FromBase64String(base64Text);
+                File.WriteAllBytes(filePath, bytes);
+                return true;
+            }
+            catch { return false; }
         }
 
     }

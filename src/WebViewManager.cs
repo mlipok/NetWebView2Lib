@@ -26,45 +26,46 @@ namespace NetWebView2Lib
         /// Triggered when a message is sent from the WebView.
         /// </summary>
         /// <param name="message">The message content.</param>
-        [DispId(1)]
-        void OnMessageReceived(string message);
+        [DispId(1)] void OnMessageReceived(string message);
         /// <summary>
         /// Triggered when navigation starts.
         /// </summary>
         /// <param name="url">The URL being navigated to.</param> 
-        [DispId(2)]
-        void OnNavigationStarting(string url);
+        [DispId(2)] void OnNavigationStarting(string url);
         /// <summary>
         /// Triggered when navigation is completed.
         /// </summary>
         /// <param name="isSuccess">Indicates if navigation was successful.</param>  
         /// <param name="webErrorStatus">The web error status code.</param> 
-        [DispId(3)]
-        void OnNavigationCompleted(bool isSuccess, int webErrorStatus);
+        [DispId(3)] void OnNavigationCompleted(bool isSuccess, int webErrorStatus);
         /// <summary>
         /// Triggered when the document title changes.
         /// </summary>
         /// <param name="newTitle">The new document title.</param> 
-        [DispId(4)] 
-        void OnTitleChanged(string newTitle);
-        /// <summary>
-        /// Triggered when the URL changes.
-        /// </summary>
-        /// <param name="newUrl">The new URL.</param> 
-        [DispId(13)] 
-        void OnURLChanged(string newUrl);
-        /// <summary>
-        /// Triggered when a custom context menu is requested.
-        /// </summary>
+        [DispId(4)] void OnTitleChanged(string newTitle);
+
+        /// <summary>Triggered when a custom context menu is requested.</summary>
         /// <param name="menuData">JSON string containing context info (kind, link, selection).</param>
-        [DispId(6)]
-        void OnContextMenu(string menuData);
+        [DispId(6)] void OnContextMenu(string menuData);
+
         /// <summary>Triggered when the zoom factor changes.</summary>
         [DispId(10)] void OnZoomChanged(double factor);
         /// <summary>Triggered when the browser gets focus.</summary>
         [DispId(11)] void OnBrowserGotFocus(int reason);
         /// <summary>Triggered when the browser loses focus.</summary>
         [DispId(12)] void OnBrowserLostFocus(int reason);
+        /// <summary>
+        /// Triggered when the URL changes.
+        /// </summary>
+        /// <param name="newUrl">The new URL.</param> 
+        [DispId(13)] void OnURLChanged(string newUrl);
+
+        /// <summary>Triggered when a context menu is requested (Simplified for AutoIt).</summary>
+        /// <param name="linkUrl">The URL of the link under the cursor, if any.</param>
+        /// <param name="x">The X coordinate.</param>
+        /// <param name="y">The Y coordinate.</param>
+        /// <param name="selectionText">The selected text under the cursor, if any.</param>
+        [DispId(190)] void OnContextMenuRequested(string linkUrl, int x, int y, string selectionText);
     }
 
     /// <summary>
@@ -219,6 +220,24 @@ namespace NetWebView2Lib
         [DispId(183)] bool AreBrowserPopupsAllowed { get; set; }
         /// <summary>Add a script that executes on every page load (Permanent Injection).</summary>
         [DispId(184)] void AddInitializationScript(string script);
+        /// <summary>Binds the internal JSON data to a browser variable.</summary>
+        [DispId(185)] bool BindJsonToBrowser(string variableName);
+        /// <summary>Syncs JSON data to internal parser and optionally binds it to a browser variable.</summary>
+        [DispId(186)] void SyncInternalData(string json, string bindToVariableName = "");
+
+        /// <summary>Execute JavaScript and return result synchronously (Blocking wait).</summary>
+        [DispId(188)] string ExecuteScriptWithResult(string script);
+        /// <summary>Enables or disables automatic resizing of the WebView to fill its parent.</summary>
+        [DispId(189)] void SetAutoResize(bool enabled);
+
+        /// <summary>Execute JavaScript on the current page immediately.</summary>
+        [DispId(191)] void ExecuteScriptOnPage(string script);
+
+        /// <summary>Clears the browser cache (DiskCache and LocalStorage).</summary>
+        [DispId(193)] void ClearCache();
+        /// <summary>Enables or disables custom context menu handling.</summary>
+        [DispId(194)] bool CustomMenuEnabled { get; set; }
+
 
         // --- DATA EXTRACTION & SCRAPING ---
 
@@ -248,8 +267,15 @@ namespace NetWebView2Lib
         private const string StyleId = "autoit-injected-style";
         private bool _areBrowserPopupsAllowed = false;
         private bool _contextMenuEnabled = true;
+        private bool _autoResizeEnabled = false;
+        private bool _customMenuEnabled = false;
 
-        private string _lastScriptId = "";
+        private int _offsetX = 0;
+        private int _offsetY = 0;
+        private IntPtr _parentHandle = IntPtr.Zero;
+        private ParentWindowSubclass _parentSubclass;
+
+        private string _lastCssRegistrationId = "";
 
         // --- DELEGATES ---
 
@@ -284,11 +310,12 @@ namespace NetWebView2Lib
         /// <param name="newUrl">The new URL.</param> 
         public delegate void OnURLChangedDelegate(string newUrl);
 
-        /// <summary>
-        /// Delegate for custom context menu event.
-        /// </summary>
+        /// <summary>Delegate for custom context menu event.</summary>
         /// <param name="menuData">JSON string with context info.</param>
         public delegate void OnContextMenuDelegate(string menuData);
+
+        /// <summary>Delegate for simplified context menu event.</summary>
+        public delegate void OnContextMenuRequestedDelegate(string linkUrl, int x, int y, string selectionText);
 
         /// <summary>Delegate for Zoom Changed.</summary>
         public delegate void OnZoomChangedDelegate(double factor);
@@ -325,11 +352,11 @@ namespace NetWebView2Lib
         /// </summary> 
         public event OnURLChangedDelegate OnURLChanged;
 
-        /// <summary>
-        /// Event fired when a custom context menu is requested.
-        /// </summary>
-
+        /// <summary>Event fired when a custom context menu is requested.</summary>
         public event OnContextMenuDelegate OnContextMenu;
+
+        /// <summary>Event fired when a simplified context menu is requested.</summary>
+        public event OnContextMenuRequestedDelegate OnContextMenuRequested;
 
         /// <summary>Event fired when zoom factor changes.</summary>
         public event OnZoomChangedDelegate OnZoomChanged;
@@ -406,7 +433,14 @@ namespace NetWebView2Lib
             {
                 // Convert the incoming handle from AutoIt (passed as object/pointer)
                 long rawHandleValue = Convert.ToInt64(parentHandle);
-                IntPtr localParentPtr = new IntPtr(rawHandleValue);
+                _parentHandle = new IntPtr(rawHandleValue);
+
+                // Store offsets for Smart Resize
+                _offsetX = x;
+                _offsetY = y;
+
+                // Initialize the Subclass helper for Smart Resize
+                _parentSubclass = new ParentWindowSubclass(() => PerformSmartResize());
 
                 // Manage User Data Folder (User Profile)
                 // If no path is provided, create a default one in the application directory
@@ -423,7 +457,7 @@ namespace NetWebView2Lib
                     _webView.Location = new Point(x, y);
                     _webView.Size = new Size(width, height);
                     // Attach the WebView to the AutoIt window/container
-                    SetParent(_webView.Handle, localParentPtr);
+                    SetParent(_webView.Handle, _parentHandle);
                     _webView.Visible = false;
                 });
 
@@ -442,6 +476,13 @@ namespace NetWebView2Lib
                 // Apply settings and register events
                 ConfigureSettings();
                 RegisterEvents();
+
+                // Add default context menu bridge helper
+                await _webView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(@"
+                    window.dispatchEventToAutoIt = function(lnk, x, y, sel) {
+                        window.chrome.webview.postMessage('CONTEXT_MENU_REQUEST|' + (lnk||'') + '|' + (x||0) + '|' + (y||0) + '|' + (sel||''));
+                    };
+                ");
 
                 // Make the browser visible once everything is loaded
                 InvokeOnUiThread(() => _webView.Visible = true);
@@ -538,7 +579,7 @@ namespace NetWebView2Lib
             var settings = _webView.CoreWebView2.Settings;
             settings.IsWebMessageEnabled = true;            // Enable Web Messages
             settings.AreDevToolsEnabled = true;             // Enable DevTools by default
-            settings.AreDefaultContextMenusEnabled = false; // Disable default context menus
+            settings.AreDefaultContextMenusEnabled = true;  // Keep TRUE to ensure the event fires
             _webView.DefaultBackgroundColor = Color.Transparent;
         }
 
@@ -572,25 +613,33 @@ namespace NetWebView2Lib
             // Context Menu Event
             _webView.CoreWebView2.ContextMenuRequested += async (sender, args) =>
             {
-                // 1. Blocking
-                args.Handled = true;
-                if (_contextMenuEnabled) { args.Handled = false; return; }
+                // 1. Browser Default Menu Strategy
+                // Handled=true means we block the browser's menu. 
+                // Handled=false means we let the browser show its own menu.
+                args.Handled = !_contextMenuEnabled;
 
                 try
                 {
-                    // 2. Get the TagName asynchronously (before Invoke)
+                    // 2. Data Retrieval (Async parts first)
                     // Check if the element or any of its parents is TABLE
                     string script = "document.elementFromPoint(" + args.Location.X + "," + args.Location.Y + ").closest('table') ? 'TABLE' : document.elementFromPoint(" + args.Location.X + "," + args.Location.Y + ").tagName";
                     string tagName = await _webView.CoreWebView2.ExecuteScriptAsync(script);
-                    tagName = tagName.Trim('\"');
+                    tagName = tagName?.Trim('\"') ?? "UNKNOWN";
 
-                    // 3. Data Retrieval
+                    // Extraction of Context info
                     string k = args.ContextMenuTarget.Kind.ToString();
                     string src = args.ContextMenuTarget.HasSourceUri ? args.ContextMenuTarget.SourceUri : "";
                     string lnk = args.ContextMenuTarget.HasLinkUri ? args.ContextMenuTarget.LinkUri : "";
                     string sel = args.ContextMenuTarget.HasSelection ? args.ContextMenuTarget.SelectionText : "";
 
-                    // 4. Build JSON - Escaping for safety
+                    // --- CASE A: Parameter-based Event (v1.4.2 Priority) ---
+                    // This is DispId 190 for AutoIt compatibility
+                    _webView.BeginInvoke(new Action(() => {
+                        OnContextMenuRequested?.Invoke(lnk, args.Location.X, args.Location.Y, sel);
+                    }));
+
+                    // --- CASE B: Legacy JSON-based Event (v1.4.1 compatibility) ---
+                    // Build JSON - Escaping for safety
                     string cleanSrc = src.Replace("\"", "\\\"");
                     string cleanLnk = lnk.Replace("\"", "\\\"");
                     string cleanSel = sel.Replace("\"", "\\\"").Replace("\r", "").Replace("\n", "\\n");
@@ -605,16 +654,13 @@ namespace NetWebView2Lib
                         "\"selection\":\"" + cleanSel + "\"" +
                         "}";
 
-                    // 5. Send (Clean JSON)
                     _webView.BeginInvoke(new Action(() => {
                         OnContextMenu?.Invoke("JSON:" + json);
                     }));
                 }
-                catch
-                {
-                    _webView.BeginInvoke(new Action(() => {
-                        OnContextMenu?.Invoke("ERROR");
-                    }));
+                catch (Exception ex) 
+                { 
+                    Debug.WriteLine("ContextMenu Error: " + ex.Message); 
                 }
             };
 
@@ -701,7 +747,26 @@ namespace NetWebView2Lib
             _webView.CoreWebView2.WebMessageReceived += (s, e) =>
             {
                 string message = e.TryGetWebMessageAsString();
-                _bridge.RaiseMessage(message); // Στέλνει το μήνυμα στο σωστό κανάλι
+                
+                // Routing: Check if this is a JS-triggered context menu request
+                if (message != null && message.StartsWith("CONTEXT_MENU_REQUEST|"))
+                {
+                    var parts = message.Split('|');
+                    if (parts.Length >= 5)
+                    {
+                        string lnk = parts[1];
+                        int x = int.TryParse(parts[2], out int px) ? px : 0;
+                        int y = int.TryParse(parts[3], out int py) ? py : 0;
+                        string sel = parts[4];
+                        
+                        _webView.BeginInvoke(new Action(() => {
+                            OnContextMenuRequested?.Invoke(lnk, x, y, sel);
+                        }));
+                        return; // Handled
+                    }
+                }
+
+                _bridge.RaiseMessage(message); // Send message to the correct channel
             };
 
             // Focus Events (Native Bridge) 
@@ -728,22 +793,25 @@ namespace NetWebView2Lib
         // --- PUBLIC API METHODS ---
 
         /// <summary>
-        /// Registers a script that will run automatically every time a new page loads.
+        /// Adds a script that executes on every page load (Permanent Injection).
         /// </summary>
         /// <param name="script">The JavaScript code to be injected.</param>
         public async void AddInitializationScript(string script)
         {
-            if (_webView?.CoreWebView2 != null)
-            {
-                // Remove the last registered script if exists
-                if (!string.IsNullOrEmpty(_lastScriptId))
-                {
-                    _webView.CoreWebView2.RemoveScriptToExecuteOnDocumentCreated(_lastScriptId);
-                }
+            if (_webView?.CoreWebView2 == null) return;
 
-                // Add the new script and store its ID
-                _lastScriptId = await _webView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(script);
+            try
+            {
+                // This command tells WebView2 to run the script 
+                // on every new document created (refresh or navigation)
+                await _webView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(script);
+
+                // Run it immediately for the current page as well
                 await _webView.CoreWebView2.ExecuteScriptAsync(script);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Error adding initialization script: " + ex.Message);
             }
         }
 
@@ -897,16 +965,42 @@ namespace NetWebView2Lib
         /// <summary>
         /// Inject CSS code into the current page.
         /// </summary>
-        public void InjectCss(string cssCode)
+        /// <param name="cssCode"></param>
+        public async void InjectCss(string cssCode)
         {
-            string js = $"(function() {{ let style = document.getElementById('{StyleId}'); if (!style) {{ style = document.createElement('style'); style.id = '{StyleId}'; document.head.appendChild(style); }} style.innerHTML = `{cssCode}`; }})();";
+            // The JS wrapper you already have
+            string js = $"(function() {{ let style = document.getElementById('{StyleId}'); if (!style) {{ style = document.createElement('style'); style.id = '{StyleId}'; document.head.appendChild(style); }} style.innerHTML = `{cssCode.Replace("`", "\\` text-decoration")}`; }})();";
+
+            // Execute NOW (for the current page)
             ExecuteScript(js);
+
+            // Persistence
+            // If there was a previous persistent CSS, we remove it to avoid filling up memory
+            if (!string.IsNullOrEmpty(_lastCssRegistrationId))
+            {
+                _webView.CoreWebView2.RemoveScriptToExecuteOnDocumentCreated(_lastCssRegistrationId);
+            }
+
+            // Register the new CSS to run on every refresh
+            _lastCssRegistrationId = await _webView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(js);
         }
 
         /// <summary>
         /// Remove previously injected CSS.
         /// </summary>
-        public void ClearInjectedCss() => ExecuteScript($"(function() {{ let style = document.getElementById('{StyleId}'); if (style) style.remove(); }})();");
+        public void ClearInjectedCss()
+        {
+            // Subtraction from the future (Stops automatic injection)
+            if (!string.IsNullOrEmpty(_lastCssRegistrationId))
+            {
+                _webView.CoreWebView2.RemoveScriptToExecuteOnDocumentCreated(_lastCssRegistrationId);
+                _lastCssRegistrationId = "";
+            }
+
+            // Subtraction from now
+            ExecuteScript($"(function() {{ let style = document.getElementById('{StyleId}'); if (style) style.remove(); }})();");
+        }
+
 
         /// <summary>
         /// Toggle audit highlights on/off.
@@ -994,7 +1088,62 @@ namespace NetWebView2Lib
         /// <summary>
         /// Parse JSON into the internal parser.
         /// </summary>
-        public bool ParseJsonToInternal(string json) => _internalParser.Parse(json);
+        public bool ParseJsonToInternal(string json) => _internalParser.Parse(json?.Trim());
+
+        /// <summary>
+        /// Binds the internal JSON data to a browser variable.
+        /// </summary>
+        public bool BindJsonToBrowser(string variableName)
+        {
+            try
+            {
+                if (_webView?.CoreWebView2 == null) return false;
+
+                // 2. Get minified JSON from internal parser
+                string jsonData = _internalParser.GetMinifiedJson();
+                if (string.IsNullOrEmpty(jsonData))
+                {
+                    jsonData = "{}"; // Fallback to empty object
+                }
+
+                // 3. Escape for JS safety
+                string safeJson = jsonData.Replace("\\", "\\\\").Replace("'", "\\'");
+
+                // 3. Build script with JS try-catch and console logging
+                string script = $@"
+                    try {{
+                        window.{variableName} = JSON.parse('{safeJson}');
+                        console.log('NetWebView2Lib: Data bound to window.{variableName}');
+                        true;
+                    }} catch (e) {{
+                        console.error('NetWebView2Lib Bind Error:', e);
+                        false;
+                    }}";
+
+                // 4. Execute script
+                _webView.CoreWebView2.ExecuteScriptAsync(script);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("BindJsonToBrowser Error: " + ex.Message);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Syncs JSON data to internal parser and optionally binds it to a browser variable.
+        /// </summary>
+        public void SyncInternalData(string json, string bindToVariableName = "")
+        {
+            if (ParseJsonToInternal(json))
+            {
+                if (!string.IsNullOrEmpty(bindToVariableName))
+                {
+                    BindJsonToBrowser(bindToVariableName);
+                }
+            }
+        }
 
         /// <summary>
         /// Get a value from the internal JSON parser.
@@ -1028,6 +1177,164 @@ namespace NetWebView2Lib
         public string GetSource()
         {
             return _webView?.Source?.ToString() ?? "";
+        }
+
+        /// <summary>
+        /// Enables or disables automatic resizing of the WebView to fill its parent.
+        /// </summary>
+        /// <param name="enabled">True to enable auto-resize, False to disable.</param>
+        public void SetAutoResize(bool enabled)
+        {
+            if (_parentHandle == IntPtr.Zero || _parentSubclass == null) return;
+
+            _autoResizeEnabled = enabled;
+
+            if (_autoResizeEnabled)
+            {
+                // Assign the handle to start intercepting WM_SIZE
+                _parentSubclass.AssignHandle(_parentHandle);
+                // Immediately perform a resize
+                PerformSmartResize();
+            }
+            else
+            {
+                // Release the handle to stop intercepting
+                _parentSubclass.ReleaseHandle();
+            }
+        }
+
+        private void PerformSmartResize()
+        {
+            if (_webView == null || _parentHandle == IntPtr.Zero) return;
+
+            if (_webView.InvokeRequired)
+            {
+                _webView.Invoke(new Action(PerformSmartResize));
+                return;
+            }
+
+            // Get the parent window client dimensions using Win32 API
+            if (GetClientRect(_parentHandle, out Rect rect))
+            {
+                int parentWidth = rect.Right - rect.Left;
+                int parentHeight = rect.Bottom - rect.Top;
+
+                int newWidth = parentWidth - _offsetX;
+                int newHeight = parentHeight - _offsetY;
+
+                _webView.Left = _offsetX;
+                _webView.Top = _offsetY;
+                _webView.Width = Math.Max(10, newWidth);
+                _webView.Height = Math.Max(10, newHeight);
+
+                // Notify AutoIt that the resizing is finished
+                OnMessageReceived?.Invoke("WINDOW_RESIZED|" + _webView.Width + "|" + _webView.Height);
+            }
+        }
+
+        /// <summary>
+        /// NativeWindow implementation to intercept WM_SIZE from non-.NET parent windows.
+        /// </summary>
+        private class ParentWindowSubclass : NativeWindow
+        {
+            private readonly Action _onResize;
+            private const int WM_SIZE = 0x0005;
+
+            public ParentWindowSubclass(Action onResize)
+            {
+                _onResize = onResize;
+            }
+
+            protected override void WndProc(ref Message m)
+            {
+                base.WndProc(ref m);
+                if (m.Msg == WM_SIZE)
+                {
+                    _onResize?.Invoke();
+                }
+            }
+        }
+
+        /// <summary>Enable/Disable Custom Context Menu.</summary>
+        public bool CustomMenuEnabled
+        {
+            get => _customMenuEnabled;
+            set => _customMenuEnabled = value;
+        }
+
+        /// <summary>
+        /// Execute JavaScript on the current page immediately.
+        /// </summary>
+        /// <param name="script">The JavaScript code to be executed.</param>
+        public async void ExecuteScriptOnPage(string script)
+        {
+            if (_webView?.CoreWebView2 == null) return;
+            // Execute script on current page
+            await _webView.CoreWebView2.ExecuteScriptAsync(script);
+        }
+
+        /// <summary>
+        /// Clears the browser cache (DiskCache and LocalStorage).
+        /// </summary>
+        public async void ClearCache()
+        {
+            if (_webView?.CoreWebView2 == null) return;
+
+            // Clears browser cache (disk cache, shaders, local storage, etc.)
+            await _webView.CoreWebView2.Profile.ClearBrowsingDataAsync(
+                CoreWebView2BrowsingDataKinds.DiskCache |
+                CoreWebView2BrowsingDataKinds.LocalStorage
+            );
+
+            Debug.WriteLine("NetWebView2Lib: Cache cleared successfully.");
+        }
+
+        /// <summary>
+        /// Executes JavaScript and returns the result synchronously using a Message Pump.
+        /// This version is safe to use within WebView2 Events.
+        /// </summary>
+        public string ExecuteScriptWithResult(string script)
+        {
+            if (_webView?.CoreWebView2 == null) return "ERROR: WebView not initialized";
+
+            try
+            {
+                // 1. Start asynchronous script execution
+                var task = _webView.CoreWebView2.ExecuteScriptAsync(script);
+
+                // 2. Wait for result without blocking the UI thread (Message Pumping)
+                var start = DateTime.Now;
+                while (!task.IsCompleted)
+                {
+                    // Process pending windows messages to allow WebView2 to return the result
+                    System.Windows.Forms.Application.DoEvents();
+
+                    // Safety timeout
+                    if ((DateTime.Now - start).TotalSeconds > 5)
+                        return "ERROR: Script Timeout";
+
+                    // Prevent high CPU usage during the wait loop
+                    System.Threading.Thread.Sleep(1);
+                }
+
+                // 3. Process and clean the result
+                string result = task.Result;
+
+                if (result == "null" || result == null) return string.Empty;
+
+                // Strip surrounding quotes and unescape special characters
+                if (result.StartsWith("\"") && result.EndsWith("\""))
+                {
+                    result = result.Substring(1, result.Length - 2);
+                    result = System.Text.RegularExpressions.Regex.Unescape(result);
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                return "ERROR: " + ex.Message;
+            }
         }
 
         /// <summary>

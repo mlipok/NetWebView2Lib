@@ -19,7 +19,7 @@ _GUICtrlListView_SetExtendedListViewStyle($idListView, BitOR($LVS_EX_CHECKBOXES,
 _GUICtrlListView_SetColumnWidth($idListView, 0, $iWidth * 0.6)
 _GUICtrlListView_SetColumnWidth($idListView, 1, $iWidth * 0.4)
 $iHeight += 20
-Local $idStatus = GUICtrlCreateLabel("Scanning registry... please wait...", 10, $iHeight, $iWidth - 210, 80)
+Local $idStatus = GUICtrlCreateLabel("Scanning registry... please wait...", 10, $iHeight, $iWidth - 210 - 10, 20)
 $iHeight += 20
 Local $idBtnCancel = GUICtrlCreateButton("Cancel", $iWidth - 100, $iHeight, 100, 40)
 Local $idBtnDelete = GUICtrlCreateButton("Delete Selected", $iWidth - 210, $iHeight, 100, 40)
