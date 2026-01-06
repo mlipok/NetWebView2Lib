@@ -134,16 +134,17 @@ ConsoleWrite("Page Title: " & $sTitle & @CRLF)
 
 ### 📦 Technical Breakdown
 
-| **Method / Property**     | **DispId** | **Description**                             |
-| ------------------------- | ---------- | ------------------------------------------- |
-| `AddInitializationScript` | 184        | Persistent JS injection across navigations. |
-| `SyncInternalData`        | 186        | Parses and binds JSON in one step.          |
-| `ExecuteScriptWithResult` | 188        | Synchronous JS execution (Returns String).  |
-| `OnContextMenuRequested`  | 190        | Unified 4-parameter context menu event.     |
-| `EncodeB64 / DecodeB64`   | 222-224    | Integrated Base64 & File decoding.          |
-| `ClearCache`              | 193        | Clears Disk Cache & Local Storage.          |
+|**Method / Property**|**DispId**|**Description**|
+|---|---|---|
+|`AddInitializationScript`|184|Persistent JS injection across navigations.|
+|`ExecuteScriptWithResult`|188|Synchronous JS execution (Returns String).|
+|`SetAutoResize`|189|Automated parent-container docking.|
+|`OnContextMenuRequested`|190|Parameter-based context menu event.|
+|`ExecuteScriptOnPage`|191|Immediate, non-persistent script execution.|
+|`ClearCache`|193|Clears Disk Cache & Local Storage.|
 
 ---
+
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" width="100%">
