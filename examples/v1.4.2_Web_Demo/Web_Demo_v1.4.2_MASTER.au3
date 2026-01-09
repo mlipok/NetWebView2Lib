@@ -6,7 +6,7 @@
 #include <Misc.au3>
 #include "_WV2_ExtensionPicker.au3"
 
-; Web_Demo_v1.4.2_MASTER.au3
+; Web_Demo_v1.4.2_MASTER.au3 
 ; The Ultimate Comprehensive Demo
 
 OnAutoItExitRegister("_ExitApp")
@@ -574,3 +574,4 @@ Func _HandleScreenshotSequence($sMethod, $sData)
 EndFunc   ;==>_HandleScreenshotSequence
 ;---------------------------------------------------------------------------------------
 #EndRegion ; === SCRAPING & TABLES & FORMS ===
+
