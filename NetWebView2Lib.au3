@@ -1,14 +1,13 @@
-#Region ; *** Dynamically added Include files ***
-#include <WinAPIShPath.au3>                                  ; added:01/18/26 02:35:43
-#EndRegion ; *** Dynamically added Include files ***
 ;~ #AutoIt3Wrapper_UseX64=y
 #AutoIt3Wrapper_UseX64=n
 #AutoIt3Wrapper_Run_AU3Check=Y
 #AutoIt3Wrapper_AU3Check_Stop_OnWarning=y
 #AutoIt3Wrapper_AU3Check_Parameters=-d -w 1 -w 2 -w 3 -w 4 -w 5 -w 6 -w 7
+#Au3Stripper_Ignore_Funcs=__NetWebView2_WebEvents_*,__NetWebView2_JSEvents_*
 
 #include <Array.au3>
 #include <GUIConstantsEx.au3>
+#include <WinAPIShPath.au3>
 #include <WindowsConstants.au3>
 
 ; Global objects
@@ -18,6 +17,7 @@ Global $g_DebugInfo = True
 
 #Region ; NetWebView2Lib UDF
 Func _NetWebView2_StartUp($sDLLFileFullPath)
+	#RegistrationFree is WorkInProgress
 	$sDLLFileFullPath = _WinAPI_PathCanonicalize($sDLLFileFullPath)
 ;~ 	ConsoleWrite($sDLLFileFullPath & @CRLF)
 	$_g_hNetWebView2Lib_DLL = DllOpen($sDLLFileFullPath)
