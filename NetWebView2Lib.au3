@@ -20,6 +20,13 @@ Global $_g_sNetWebView2_User_JSEvents = ""
 Global $_g_sNetWebView2_User_WebViewEvents = ""
 Global $_g_oWeb
 
+Global Enum _
+		$WEBVIEW2__NAVSTATUS__READY, _
+		$WEBVIEW2__NAVSTATUS__STARTING, _
+		$WEBVIEW2__NAVSTATUS__URL_CHANGED, _
+		$WEBVIEW2__NAVSTATUS__COMPLETED, _
+		$WEBVIEW2__NAVSTATUS__TITLE_CHANGED
+
 #Region ; NetWebView2Lib UDF - core function
 Func _NetWebView2_StartUp($sDLLFileFullPath)
 	#RegistrationFree is WorkInProgress
@@ -73,7 +80,7 @@ Func _NetWebView2_Initialize(ByRef $oWebV2M, $hGUI, $sProfileDirectory, $i_Left 
 	Local $iInit = $oWebV2M.Initialize(($hGUI), $sProfileDirectory, $i_Left, $i_Top, $i_Width, $i_Height)
 	If @error Then Return SetError(@error, @extended, $iInit)
 
-	If $b_LoadWait Then _NetWebView2_LoadWait($oWebV2M)
+	If $b_LoadWait Then _NetWebView2_LoadWait($oWebV2M, $WEBVIEW2__NAVSTATUS__READY)
 	If @error Then Return SetError(@error, @extended, $iInit)
 
 	; WebView2 Configuration
@@ -209,8 +216,10 @@ EndFunc   ;==>_NetWebView2_CleanUp
 ; #FUNCTION# ====================================================================================================================
 ; Name ..........: _NetWebView2_LoadWait
 ; Description ...:
-; Syntax ........: _NetWebView2_LoadWait(ByRef $oWebV2M)
+; Syntax ........: _NetWebView2_LoadWait(ByRef $oWebV2M, $iStatus)
+; Syntax ........: _NetWebView2_LoadWait(ByRef $oWebV2M[, $iStatus = $WEBVIEW2__NAVSTATUS__READY])
 ; Parameters ....: $oWebV2M             - [in/out] an object.
+;                  $iStatus             - [optional] an integer value. Default is $WEBVIEW2__NAVSTATUS__READY.
 ; Return values .: None
 ; Author ........: mLipok, ioa747
 ; Modified ......:
@@ -219,15 +228,21 @@ EndFunc   ;==>_NetWebView2_CleanUp
 ; Link ..........:
 ; Example .......: No
 ; ===============================================================================================================================
-Func _NetWebView2_LoadWait(ByRef $oWebV2M)
+Func _NetWebView2_LoadWait(ByRef $oWebV2M, $iStatus = $WEBVIEW2__NAVSTATUS__READY)
 	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc) ; Local COM Error Handler
 	#forceref $oMyError
 
 	; Wait for WebView2 to be ready
 	While Sleep(10)
-		If $oWebV2M.IsReady Then ExitLoop
-		If @error Then Return SetError(@error, @extended, -1)
+		If $oWebV2M.IsReady Then
+			If $iStatus == $WEBVIEW2__NAVSTATUS__READY Or _NetWebView2_NavigationStatus() >= $iStatus Then
+				ExitLoop
+			EndIf
+		EndIf
+;~ 		If @error Then Return SetError(@error, @extended, -1)
 	WEnd
+	If $_g_bNetWebView2_DebugInfo Then ConsoleWrite("! After _NetWebView2_LoadWait("&$iStatus&") ::: _NetWebView2_NavigationStatus()=" & _NetWebView2_NavigationStatus() & @CRLF)
+	_NetWebView2_NavigationStatus($WEBVIEW2__NAVSTATUS__READY)
 
 EndFunc   ;==>_NetWebView2_LoadWait
 
@@ -253,7 +268,7 @@ Func _NetWebView2_Navigate(ByRef $oWebV2M, $sURL, $b_LoadWait = True)
 	Local $iNavigation = $oWebV2M.Navigate($sURL)
 	If @error Then Return SetError(@error, @extended, $iNavigation)
 
-	If $b_LoadWait Then _NetWebView2_LoadWait($oWebV2M)
+	If $b_LoadWait Then _NetWebView2_LoadWait($oWebV2M, $WEBVIEW2__NAVSTATUS__TITLE_CHANGED)
 	Return SetError(@error, @extended, '')
 EndFunc   ;==>_NetWebView2_Navigate
 
@@ -276,12 +291,22 @@ Func _NetWebView2_NavigateToString(ByRef $oWebV2M, $s_HTML, $b_LoadWait = True)
 	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc) ; Local COM Error Handler
 	#forceref $oMyError
 
-	Local $iNavigation = $oWebV2M.NavigateToString($s_HTML)
+	Local $iNavigation = $oWebV2M.NavigateToString($s_HTML, $WEBVIEW2__NAVSTATUS__TITLE_CHANGED)
 	If @error Then Return SetError(@error, @extended, $iNavigation)
 
 	If $b_LoadWait Then _NetWebView2_LoadWait($oWebV2M)
 	Return SetError(@error, @extended, '')
 EndFunc   ;==>_NetWebView2_NavigateToString
+
+Func _NetWebView2_NavigationStatus($iStatus = Default, $iError = @error, $iExtended = @extended)
+	Local Static $i_static = $WEBVIEW2__NAVSTATUS__READY
+	If $iStatus = Default Then Return SetError($iError, $iExtended, $i_static)
+
+	$i_static = $iStatus
+	Return SetError($iError, $iExtended, $i_static)
+EndFunc   ;==>_NetWebView2_NavigationStatus
+
+
 #EndRegion ; NetWebView2Lib UDF - core function
 
 #Region ; NetWebView2Lib UDF - helper function
@@ -406,18 +431,23 @@ Func __NetWebView2_WebViewEvents__OnMessageReceived($sMsg)
 	Switch $sCommand
 		Case "INIT_READY"
 			__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & $sData, 1)
-
-			#QUESTION Why here ExecuteScript ?
-			$_g_oWeb.ExecuteScript('window.chrome.webview.postMessage(JSON.stringify({ "type": "COM_TEST", "status": "OK" }));')
+			_NetWebView2_NavigationStatus($WEBVIEW2__NAVSTATUS__READY)
 
 		Case "NAV_STARTING"
 			__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & $sData, 1)
+			_NetWebView2_NavigationStatus($WEBVIEW2__NAVSTATUS__STARTING)
+
+		Case "URL_CHANGED"
+			__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & " ?? " & $sData, 1)
+			_NetWebView2_NavigationStatus($WEBVIEW2__NAVSTATUS__URL_CHANGED)
 
 		Case "NAV_COMPLETED"
 			__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & " ?? " & $sData, 1)
+			_NetWebView2_NavigationStatus($WEBVIEW2__NAVSTATUS__COMPLETED)
 
 		Case "TITLE_CHANGED"
 			__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & $sData, 1)
+			_NetWebView2_NavigationStatus($WEBVIEW2__NAVSTATUS__TITLE_CHANGED)
 			; If you want to change the title of your GUI based on the page
 ;~ 			If $aParts[0] > 1 Then WinSetTitle($hGUI, "", "WebView2 - " & $aParts[2])
 
