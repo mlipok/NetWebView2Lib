@@ -1,6 +1,3 @@
-#Region ; *** Dynamically added Include files ***
-#include <IE.au3>                                            ; added:01/18/26 22:09:02
-#EndRegion ; *** Dynamically added Include files ***
 ;~ #AutoIt3Wrapper_UseX64=y
 #AutoIt3Wrapper_UseX64=n
 #AutoIt3Wrapper_Run_AU3Check=Y
@@ -21,6 +18,7 @@ _Example()
 Func _Example()
 	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc)
 	#forceref $oMyError
+
 	; Create GUI with resizing support
 	Local $hGUI = GUICreate("WebView2AutoIt JSON Viewer", 500, 650, -1, -1, BitOR($WS_OVERLAPPEDWINDOW, $WS_CLIPCHILDREN))
 	GUISetBkColor(0x2B2B2B, $hGUI)
@@ -51,9 +49,11 @@ Func _Example()
 	$_g_oWeb = $oWebV2M
 	If @error Then Return SetError(@error, @extended, $oWebV2M)
 
-	; Important: Pass $hGUI in parentheses to maintain Pointer type for COM
-	Local $sProfileDirectory = @TempDir & "\NetWebView2Lib-UserDataFolder"
+	; Initialize JavaScript Bridge
+	Local $oJSBridge = _NetWebView2_GetBridge($oWebV2M)
+	If @error Then Return SetError(@error, @extended, $oWebV2M)
 
+	Local $sProfileDirectory = @TempDir & "\NetWebView2Lib-UserDataFolder"
 	_NetWebView2_Initialize($oWebV2M, $hGUI, $sProfileDirectory, 0, 50, 0, 0, True, True, True, 1.2, "0x2B2B2B")
 
 	; Initial JSON display
@@ -64,9 +64,6 @@ Func _Example()
 	GUISetState(@SW_SHOW)
 
 	Local $sLastSearch = ""
-
-	; Initialize JavaScript Bridge
-	Local $oJSBridge = _NetWebView2_GetBridge($oWebV2M)
 
 	; Main Application Loop
 	While 1
