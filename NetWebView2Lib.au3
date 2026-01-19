@@ -3,7 +3,7 @@
 #AutoIt3Wrapper_Run_AU3Check=Y
 #AutoIt3Wrapper_AU3Check_Stop_OnWarning=y
 #AutoIt3Wrapper_AU3Check_Parameters=-d -w 1 -w 2 -w 3 -w 4 -w 5 -w 6 -w 7
-#Au3Stripper_Ignore_Funcs=__NetWebView2_WebEvents__*,__NetWebView2_JSEvents__*
+#Au3Stripper_Ignore_Funcs=__NetWebView2_WebViewEvents__*,__NetWebView2_JSEvents__*
 
 #include <Array.au3>
 #include <GUIConstantsEx.au3>
@@ -17,6 +17,8 @@
 Global $_g_hNetWebView2Lib_DLL = ''
 Global $_g_oWeb
 Global $g_DebugInfo = True
+Global $_g_sUser_FnPrefix__NetWebView2_JSEvents = ""
+Global $_g_sUser_FnPrefix__NetWebView2_WebViewEvents = ""
 
 #Region ; NetWebView2Lib UDF - core function
 Func _NetWebView2_StartUp($sDLLFileFullPath)
@@ -66,7 +68,9 @@ EndFunc   ;==>_NetWebView2_ShutDown
 ; Example .......: No
 ; ===============================================================================================================================
 Func _NetWebView2_Initialize(ByRef $oWebV2M, $hGUI, $sProfileDirectory, $i_Left = 0, $i_Top = 0, $i_Width = 0, $i_Height = 0, $b_LoadWait = True, $b_SetAutoResize = True, $b_AreDevToolsEnabled = True, $i_ZoomFactor = 1.0, $s_BackColor = "0x2B2B2B")
-	Local $iInit = $oWebV2M.Initialize($hGUI, $sProfileDirectory, $i_Left, $i_Top, $i_Width, $i_Height)
+
+	; Important: Pass $hGUI in parentheses to maintain Pointer type for COM
+	Local $iInit = $oWebV2M.Initialize(($hGUI), $sProfileDirectory, $i_Left, $i_Top, $i_Width, $i_Height)
 	If @error Then Return SetError(@error, @extended, $iInit)
 
 	If $b_LoadWait Then _NetWebView2_LoadWait($oWebV2M)
@@ -83,8 +87,8 @@ EndFunc   ;==>_NetWebView2_Initialize
 ; #FUNCTION# ====================================================================================================================
 ; Name ..........: _NetWebView2_CreateManager
 ; Description ...:
-; Syntax ........: _NetWebView2_CreateManager([$sFnPrefix = "__NetWebView2_WebEvents__"])
-; Parameters ....: $sFnPrefix           - [optional] a string value. Default is "__NetWebView2_WebEvents__".
+; Syntax ........: _NetWebView2_CreateManager([$sUser_FnPrefix = ""])
+; Parameters ....: $sUser_FnPrefix           - [optional] a string value. Default is "".
 ; Return values .: None
 ; Author ........: mLipok, ioa747
 ; Modified ......:
@@ -93,23 +97,24 @@ EndFunc   ;==>_NetWebView2_Initialize
 ; Link ..........:
 ; Example .......: No
 ; ===============================================================================================================================
-Func _NetWebView2_CreateManager($sFnPrefix = "__NetWebView2_WebEvents__")
+Func _NetWebView2_CreateManager($sUser_FnPrefix = "")
 	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc) ; Local COM Error Handler
 	#forceref $oMyError
 	Local $oWebV2M = ObjCreate("NetWebView2.Manager") ; REGISTERED VERSION
 ;~ 	__NetWebView2_ObjName_FlagsValue($oWebV2M)
 	If @error Then __NetWebView2_Log(@ScriptLineNumber, "! [NetWebView2Lib]: Manager Creation ERROR")
 
-	ObjEvent($oWebV2M, $sFnPrefix, "IWebViewEvents")
+	If $sUser_FnPrefix Then $_g_sUser_FnPrefix__NetWebView2_WebViewEvents = $sUser_FnPrefix
+	ObjEvent($oWebV2M, "__NetWebView2_WebViewEvents__", "IWebViewEvents")
 	Return SetError(@error, @extended, $oWebV2M)
 EndFunc   ;==>_NetWebView2_CreateManager
 
 ; #FUNCTION# ====================================================================================================================
 ; Name ..........: _NetWebView2_GetBridge
 ; Description ...:
-; Syntax ........: _NetWebView2_GetBridge(ByRef $oWebV2M[, $sFnPrefix = "__NetWebView2_JSEvents__"])
+; Syntax ........: _NetWebView2_GetBridge(ByRef $oWebV2M[, $sUser_FnPrefix = ""])
 ; Parameters ....: $oWebV2M             - [in/out] an object.
-;                  $sFnPrefix           - [optional] a string value. Default is "__NetWebView2_JSEvents__".
+;                  $sUser_FnPrefix           - [optional] a string value. Default is "".
 ; Return values .: None
 ; Author ........: mLipok, ioa747
 ; Modified ......:
@@ -118,14 +123,15 @@ EndFunc   ;==>_NetWebView2_CreateManager
 ; Link ..........:
 ; Example .......: No
 ; ===============================================================================================================================
-Func _NetWebView2_GetBridge(ByRef $oWebV2M, $sFnPrefix = "__NetWebView2_JSEvents__")
+Func _NetWebView2_GetBridge(ByRef $oWebV2M, $sUser_FnPrefix = "")
 	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc) ; Local COM Error Handler
 	#forceref $oMyError
 
 	Local $oWebJS = $oWebV2M.GetBridge()
 	If @error Then __NetWebView2_Log(@ScriptLineNumber, "! [NetWebView2Lib]: Manager.GetBridge() ERROR")
 
-	ObjEvent($oWebJS, $sFnPrefix, "IBridgeEvents")
+	If $sUser_FnPrefix Then $_g_sUser_FnPrefix__NetWebView2_JSEvents = $sUser_FnPrefix
+	ObjEvent($oWebJS, "__NetWebView2_JSEvents__", "IBridgeEvents")
 	Return SetError(@error, @extended, $oWebJS)
 EndFunc   ;==>_NetWebView2_GetBridge
 
@@ -387,8 +393,8 @@ Func __NetWebView2_COMErrFunc($oError) ; COM Error Function used by COM Error Ha
 EndFunc   ;==>__NetWebView2_COMErrFunc
 
 ; Handles native WebView2 events
-#TODO => Func __NetWebView2_WebEvents__OnMessageReceived(ByRef $oWebV2M, $hGUI, $sMsg)
-Func __NetWebView2_WebEvents__OnMessageReceived($sMsg)
+#TODO => Func __NetWebView2_WebViewEvents__OnMessageReceived(ByRef $oWebV2M, $hGUI, $sMsg)
+Func __NetWebView2_WebViewEvents__OnMessageReceived($sMsg)
 	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc) ; Local COM Error Handler
 	#forceref $oMyError
 	Local $iSplitPos = StringInStr($sMsg, "|")
@@ -420,18 +426,24 @@ Func __NetWebView2_WebEvents__OnMessageReceived($sMsg)
 			If $aParts[0] >= 2 Then
 				Local $iW = Int($aParts[1]), $iH = Int($aParts[2])
 				; Filter minor resize glitches
-				If $iW > 50 And $iH > 50 Then __NetWebView2_Log(@ScriptLineNumber, $s_Prefix  & $iW & "x" & $iH)
+				If $iW > 50 And $iH > 50 Then __NetWebView2_Log(@ScriptLineNumber, $s_Prefix & $iW & "x" & $iH)
 			EndIf
 		Case Else
 			__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & (StringLen($sMsg) > 150 ? StringLeft($sMsg, 150) & "..." : $sMsg), 0)
 	EndSwitch
-EndFunc   ;==>__NetWebView2_WebEvents__OnMessageReceived
+	If $_g_sUser_FnPrefix__NetWebView2_WebViewEvents Then
+		#TODO =>>>> Call($_g_sUser_FnPrefix__NetWebView2_WebViewEvents & 'OnMessageReceived', $oWebV2M, $hGUI, $sMsg)
+		Call($_g_sUser_FnPrefix__NetWebView2_WebViewEvents & 'OnMessageReceived', $sMsg)
+	EndIf
+
+EndFunc   ;==>__NetWebView2_WebViewEvents__OnMessageReceived
 
 ; Handles custom messages from JavaScript (window.chrome.webview.postMessage)
 #TODO => Func __NetWebView2_JSEvents__OnMessageReceived(ByRef $oWebV2M, ByRef $oWebJS, $hGUI, $sMsg)
 Func __NetWebView2_JSEvents__OnMessageReceived($sMsg)
 	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc) ; Local COM Error Handler
 	#forceref $oMyError
+
 	__NetWebView2_Log(@ScriptLineNumber, ">>> [JavaScriptEvents]: " & (StringLen($sMsg) > 150 ? StringLeft($sMsg, 150) & "..." : $sMsg), 0)
 	Local $sFirstChar = StringLeft($sMsg, 1)
 
@@ -484,13 +496,18 @@ Func __NetWebView2_JSEvents__OnMessageReceived($sMsg)
 
 		EndSwitch
 	EndIf
+
+	If $_g_sUser_FnPrefix__NetWebView2_JSEvents Then
+		#TODO =>>>> Call($_g_sUser_FnPrefix__NetWebView2_JSEvents & 'OnMessageReceived', $oWebV2M, $oWebJS, $hGUI, $sMsg)
+		Call($_g_sUser_FnPrefix__NetWebView2_JSEvents & 'OnMessageReceived', $sMsg)
+	EndIf
+
 EndFunc   ;==>__NetWebView2_JSEvents__OnMessageReceived
 
-#TODO => Func __NetWebView2_WebEvents__OnContextMenuRequested(ByRef $oWebV2M, $sLink, $iX, $iY, $sSelection)
-Func __NetWebView2_WebEvents__OnContextMenuRequested($sLink, $iX, $iY, $sSelection)
+#TODO => Func __NetWebView2_WebViewEvents__OnContextMenuRequested(ByRef $oWebV2M, $sLink, $iX, $iY, $sSelection)
+Func __NetWebView2_WebViewEvents__OnContextMenuRequested($sLink, $iX, $iY, $sSelection)
 	#forceref $sLink, $iX, $iY, $sSelection
 	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc) ; Local COM Error Handler
 	#forceref $oMyError
-EndFunc   ;==>__NetWebView2_WebEvents__OnContextMenuRequested
+EndFunc   ;==>__NetWebView2_WebViewEvents__OnContextMenuRequested
 #EndRegion ; NetWebView2Lib UDF - === EVENT HANDLERS ===
-
