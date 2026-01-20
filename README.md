@@ -90,7 +90,7 @@ The `NetJson.Parser` has received a massive feature upgrade to support productio
 - **Data Querying:** New `GetTokenCount` and `GetKeys` methods allow for deep inspection of JSON structures without manual parsing.
 - **Array Power Tools:** Built-in `SortArray` and `SelectUnique` (deduplication) leverage native LINQ performance to manage large data sets in memory.
 
-#### **3. Advanced Export & PDF Management (v1.4.3)**
+#### **3. Advanced Export & PDF Management**
 
 - **ExportPageData(format, filePath):** Automate saving pages as HTML or MHTML (Single File) without dialogs.
 - **PrintToPdfStream():** Capture the page as a PDF and retrieve it as a Base64 string directly in AutoIt—no temporary files needed.
