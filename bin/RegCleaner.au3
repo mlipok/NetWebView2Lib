@@ -2,6 +2,7 @@
 #AutoIt3Wrapper_Run_AU3Check=Y
 #AutoIt3Wrapper_AU3Check_Stop_OnWarning=y
 #AutoIt3Wrapper_AU3Check_Parameters=-d -w 1 -w 2 -w 3 -w 4 -w 5 -w 6 -w 7
+#Tidy_Parameters=/reel
 
 #include <GUIConstantsEx.au3>
 #include <GuiListView.au3>
@@ -106,4 +107,3 @@ Func __Delete_Checked_Items($hLV)
 		EndIf
 	Next
 EndFunc   ;==>__Delete_Checked_Items
-;---------------------------------------------------------------------------------------
