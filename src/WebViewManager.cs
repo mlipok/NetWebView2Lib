@@ -1129,7 +1129,7 @@ namespace NetWebView2Lib
                     }
                     else if (format == 1) // MHTML Snapshot
                     {
-                        var task = _webView.CoreWebView2.CallDevToolsProtocolMethodAsync("Page.captureSnapshot", "{}");
+						var task = _webView.CoreWebView2.CallDevToolsProtocolMethodAsync("Page.captureSnapshot", "{}");
                         string json = WaitAndGetResult(task);
                         if (!string.IsNullOrEmpty(json))
                         {
@@ -1602,3 +1602,4 @@ namespace NetWebView2Lib
         #endregion
     }
 }
+

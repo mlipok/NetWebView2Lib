@@ -99,7 +99,7 @@ Func _NetWebView2_CreateManager($sUserAgent = '', $s_fnEventPrefix = "", $s_AddB
 ;~ 	__NetWebView2_ObjName_FlagsValue($oWebV2M)
 	If @error Then __NetWebView2_Log(@ScriptLineNumber, "! [NetWebView2Lib]: Manager Creation ERROR", 1)
 	If $sUserAgent Then $oWebV2M.SetUserAgent($sUserAgent)
-	If $s_AddBrowserArgs Then $oWebV2M.AdditionalBrowserArguments = $s_AddBrowserArgs
+	If $s_AddBrowserArgs Then $oWebV2M.AdditionalBrowserArguments= $s_AddBrowserArgs
 	If $s_fnEventPrefix Then $_g_sNetWebView2_User_WebViewEvents = $s_fnEventPrefix
 	ObjEvent($oWebV2M, "__NetWebView2_WebViewEvents__", "IWebViewEvents")
 	Return SetError(@error, @extended, $oWebV2M)
@@ -218,14 +218,14 @@ EndFunc   ;==>_NetWebView2_CleanUp
 ; Example .......: No
 ; ===============================================================================================================================
 Func _NetWebView2_LoadWait(ByRef $oWebV2M, $iStatus = $WEBVIEW2__NAVSTATUS__READY)
-	Local Const $s_Prefix = '_NetWebView2_LoadWait: iStatus:' & $iStatus
+	Local Const $s_Prefix = "[_NetWebView2_LoadWait]: iStatus:" & $iStatus
 	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc) ; Local COM Error Handler
 	#forceref $oMyError
 
 	; Wait for WebView2 to be ready
 	While Sleep(10)
 		If $oWebV2M.IsReady Then
-			If $iStatus == $WEBVIEW2__NAVSTATUS__READY Or __NetWebView2_NavigationStatus() >= $iStatus Then
+			If __NetWebView2_NavigationStatus() >= $iStatus Then
 				ExitLoop
 			EndIf
 		EndIf
@@ -252,21 +252,39 @@ EndFunc   ;==>_NetWebView2_LoadWait
 ; Example .......: No
 ; ===============================================================================================================================
 Func _NetWebView2_Navigate(ByRef $oWebV2M, $sURL, $b_LoadWait = True)
+	Local Const $s_Prefix = "[_NetWebView2_LoadWait]: URL:" & $sURL & " WAIT:" &$b_LoadWait
 	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc) ; Local COM Error Handler
 	#forceref $oMyError
 
 	Local $iNavigation = $oWebV2M.Navigate($sURL)
+	If @error Then 	__NetWebView2_Log(@ScriptLineNumber, $s_Prefix, 1)
 	If @error Then Return SetError(@error, @extended, $iNavigation)
 
 	If $b_LoadWait Then _NetWebView2_LoadWait($oWebV2M, $WEBVIEW2__NAVSTATUS__TITLE_CHANGED)
+	If @error Then 	__NetWebView2_Log(@ScriptLineNumber, $s_Prefix, 1)
 	Return SetError(@error, @extended, '')
 EndFunc   ;==>_NetWebView2_Navigate
 
+; #FUNCTION# ====================================================================================================================
+; Name ..........: _NetWebView2_GetSource
+; Description ...:
+; Syntax ........: _NetWebView2_GetSource(ByRef $oWebV2M)
+; Parameters ....: $oWebV2M             - [in/out] an object.
+; Return values .: None
+; Author ........: mLipok
+; Modified ......:
+; Remarks .......:
+; Related .......:
+; Link ..........:
+; Example .......: No
+; ===============================================================================================================================
 Func _NetWebView2_GetSource(ByRef $oWebV2M)
+	Local Const $s_Prefix = "[_NetWebView2_GetSource]:"
 	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc) ; Local COM Error Handler
 	#forceref $oMyError
 
 	Local $sSource = $oWebV2M.GetSource()
+	If @error Then 	__NetWebView2_Log(@ScriptLineNumber, $s_Prefix, 1)
 	Return SetError(@error, @extended, $sSource)
 EndFunc   ;==>_NetWebView2_GetSource
 
@@ -287,10 +305,10 @@ EndFunc   ;==>_NetWebView2_GetSource
 ; Example .......: No
 ; ===============================================================================================================================
 Func _NetWebView2_NavigateToString(ByRef $oWebV2M, $s_HTML, $b_LoadWait = True)
+	Local Const $s_Prefix = "[_NetWebView2_NavigateToString]:" & " HTML Size:" & StringLen($s_HTML) & " LoadWait:" & $b_LoadWait
 	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc) ; Local COM Error Handler
 	#forceref $oMyError
 
-	Local Const $s_Prefix = "[_NetWebView2_PrintToPdfStream]:" & " HTML Size:" & StringLen($s_HTML) & " LoadWait:" & $b_LoadWait
 	Local $iNavigation = $oWebV2M.NavigateToString($s_HTML)
 	If @error Then Return SetError(@error, @extended, $iNavigation)
 
@@ -302,11 +320,12 @@ EndFunc   ;==>_NetWebView2_NavigateToString
 ; #FUNCTION# ====================================================================================================================
 ; Name ..........: _NetWebView2_ExportPageData
 ; Description ...:
-; Syntax ........: _NetWebView2_ExportPageData(ByRef $oWebV2M, $sFormat, $sFilePath)
+; Syntax ........: _NetWebView2_ExportPageData(ByRef $oWebV2M, $iFormat[, $sFilePath = ''])
 ; Parameters ....: $oWebV2M             - [in/out] an object.
-;                  $sFormat             - a string value.
-;                  $sFilePath           - a string value.
-; Return values .: None
+;                  $iFormat             - a string value. 0 HTML only, 1 MHTML Snapshot
+;                  $sFilePath           - [optional] a string value. Default is '' which mean make Base64 as a result instead write to file
+; Return values .: Success      - Depends on $sFilePath String with Base64 encoded binary content of the PDF or "SUCCESS: File saved to ...."
+;                  Failure      - string with error description "ERROR: ........." and set @error to 1
 ; Author ........: mLipok
 ; Modified ......:
 ; Remarks .......:
@@ -314,12 +333,16 @@ EndFunc   ;==>_NetWebView2_NavigateToString
 ; Link ..........:
 ; Example .......: No
 ; ===============================================================================================================================
-Func _NetWebView2_ExportPageData(ByRef $oWebV2M, $sFormat, $sFilePath)
+Func _NetWebView2_ExportPageData(ByRef $oWebV2M, $iFormat, $sFilePath = '')
+	#TODO $sParameters - search for  => "name": "captureSnapshot" ; https://github.com/ChromeDevTools/devtools-protocol/blob/master/json/browser_protocol.json
+	#TODO https://github.com/ioa747/NetWebView2Lib/issues/15
+	#TODO https://github.com/ioa747/NetWebView2Lib/pull/16
+
+	Local Const $s_Prefix = "[_NetWebView2_ExportPageData]:" & " Format:" & $iFormat & " FilePath:" & $sFilePath
 	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc) ; Local COM Error Handler
 	#forceref $oMyError
 
-	Local Const $s_Prefix = "[_NetWebView2_PrintToPdfStream]:" & " Format:" & $sFormat & " FilePath:" & $sFilePath
-	Local $s_Result = $oWebV2M.ExportPageData($sFormat, $sFilePath)
+	Local $s_Result = $oWebV2M.ExportPageData($iFormat, $sFilePath)
 	If StringInStr($s_Result, 'ERROR:') Then SetError(1)
 	__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & " RESULT:" & ((@error) ? ($s_Result) : ("SUCCESS")), 1)
 	Return SetError(@error, @extended, $s_Result)
@@ -328,10 +351,36 @@ EndFunc   ;==>_NetWebView2_ExportPageData
 ; #FUNCTION# ====================================================================================================================
 ; Name ..........: _NetWebView2_PrintToPdfStream
 ; Description ...:
-; Syntax ........: _NetWebView2_PrintToPdfStream(ByRef $oWebV2M, $sFormat, $sFilePath)
+; Syntax ........: _NetWebView2_PrintToPdfStream(ByRef $oWebV2M)
 ; Parameters ....: $oWebV2M             - [in/out] an object.
-;                  $sFormat             - a string value.
-;                  $sFilePath           - a string value.
+; Return values .: Success      - String with Base64 encoded binary content of the PDF
+;                  Failure      - string with error description "ERROR: ........." and set @error to 1
+; Author ........: mLipok
+; Modified ......:
+; Remarks .......:
+; Related .......:
+; Link ..........:
+; Example .......: No
+; ===============================================================================================================================
+Func _NetWebView2_PrintToPdfStream(ByRef $oWebV2M)
+	Local Const $s_Prefix = "[_NetWebView2_PrintToPdfStream]:"
+	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc) ; Local COM Error Handler
+	#forceref $oMyError
+
+	Local $s_Result = $oWebV2M.PrintToPdfStream()
+	__NetWebView2_Log(@ScriptLineNumber, $s_Prefix, 1)
+	If StringInStr($s_Result, 'ERROR:') Then SetError(1)
+
+	__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & " RESULT:" & ((@error) ? ($s_Result) : ("SUCCESS")), 1)
+	Return SetError(@error, @extended, $s_Result)
+EndFunc   ;==>_NetWebView2_PrintToPdfStream
+
+; #FUNCTION# ====================================================================================================================
+; Name ..........: _NetWebView2_DecodeB64
+; Description ...:
+; Syntax ........: _NetWebView2_DecodeB64(ByRef $oWebV2M, $sData)
+; Parameters ....: $oWebV2M             - [in/out] an object.
+;                  $sData               - a string value.
 ; Return values .: None
 ; Author ........: mLipok
 ; Modified ......:
@@ -340,17 +389,39 @@ EndFunc   ;==>_NetWebView2_ExportPageData
 ; Link ..........:
 ; Example .......: No
 ; ===============================================================================================================================
-Func _NetWebView2_PrintToPdfStream(ByRef $oWebV2M, $sFormat, $sFilePath)
+Func _NetWebView2_DecodeB64(ByRef $oWebV2M, $sData)
+	Local Const $s_Prefix = "[_NetWebView2_DecodeB64]:"
 	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc) ; Local COM Error Handler
 	#forceref $oMyError
 
-	Local Const $s_Prefix = "[_NetWebView2_PrintToPdfStream]:" & " Format:" & $sFormat & " FilePath:" & $sFilePath
-	Local $s_Result = $oWebV2M.PrintToPdfStream($sFormat, $sFilePath)
+	Local $vResult = $oWebV2M.DecodeB64($sData)
 	__NetWebView2_Log(@ScriptLineNumber, $s_Prefix, 1)
-	If StringInStr($s_Result, 'ERROR:') Then SetError(1)
-	__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & " RESULT:" & ((@error) ? ($s_Result) : ("SUCCESS")), 1)
-	Return SetError(@error, @extended, $s_Result)
-EndFunc   ;==>_NetWebView2_PrintToPdfStream
+	Return SetError(@error, @extended, $vResult)
+EndFunc
+
+; #FUNCTION# ====================================================================================================================
+; Name ..........: _NetWebView2_EncodeB64
+; Description ...:
+; Syntax ........: _NetWebView2_EncodeB64(ByRef $oWebV2M, $sData)
+; Parameters ....: $oWebV2M             - [in/out] an object.
+;                  $sData               - a string value.
+; Return values .: None
+; Author ........: mLipok
+; Modified ......:
+; Remarks .......:
+; Related .......:
+; Link ..........:
+; Example .......: No
+; ===============================================================================================================================
+Func _NetWebView2_EncodeB64(ByRef $oWebV2M, $sData)
+	Local Const $s_Prefix = "[_NetWebView2_EncodeB64]:"
+	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc) ; Local COM Error Handler
+	#forceref $oMyError
+
+	Local $vResult = $oWebV2M.EncodeB64($sData)
+	__NetWebView2_Log(@ScriptLineNumber, $s_Prefix, 1)
+	Return SetError(@error, @extended, $vResult)
+EndFunc
 
 #EndRegion ; NetWebView2Lib UDF - core function
 
@@ -474,14 +545,15 @@ EndFunc   ;==>__NetWebView2_COMErrFunc
 ; Handles native WebView2 events
 #TODO => Func __NetWebView2_WebViewEvents__OnMessageReceived(ByRef $oWebV2M, $hGUI, $sMsg)
 Func __NetWebView2_WebViewEvents__OnMessageReceived($sMsg)
+	Local Const $s_Prefix = "[WebViewEvents__OnMessageReceived]:"
 	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc) ; Local COM Error Handler
 	#forceref $oMyError
+
 	Local $iSplitPos = StringInStr($sMsg, "|")
 	Local $sCommand = $iSplitPos ? StringStripWS(StringLeft($sMsg, $iSplitPos - 1), 3) : $sMsg
 	Local $sData = $iSplitPos ? StringTrimLeft($sMsg, $iSplitPos) : ""
 	Local $aParts
 
-	Local Const $s_Prefix = "[WebViewEvents__OnMessageReceived]:" & $sCommand & ": "
 	Switch $sCommand
 		Case "INIT_READY"
 			__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & $sData, 1)
@@ -525,10 +597,10 @@ EndFunc   ;==>__NetWebView2_WebViewEvents__OnMessageReceived
 ; Handles custom messages from JavaScript (window.chrome.webview.postMessage)
 #TODO => Func __NetWebView2_JSEvents__OnMessageReceived(ByRef $oWebV2M, ByRef $oWebJS, $hGUI, $sMsg)
 Func __NetWebView2_JSEvents__OnMessageReceived($sMsg)
+	Local Const $s_Prefix = "[JSEvents__OnMessageReceived]:"
 	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc) ; Local COM Error Handler
 	#forceref $oMyError
 
-	Local Const $s_Prefix = "[JSEvents__OnMessageReceived]:"
 	__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & " " & (StringLen($sMsg) > 150 ? StringLeft($sMsg, 150) & "..." : $sMsg), 1)
 	Local $sFirstChar = StringLeft($sMsg, 1)
 
@@ -637,4 +709,3 @@ Func __NetWebView2_WebViewEvents__OnContextMenu($sMenuData)
 	__NetWebView2_Log(@ScriptLineNumber, $s_Prefix, 1)
 EndFunc   ;==>__NetWebView2_WebViewEvents__OnContextMenu
 #EndRegion ; NetWebView2Lib UDF - === EVENT HANDLERS ===
-
