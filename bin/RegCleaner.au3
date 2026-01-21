@@ -40,8 +40,9 @@ Func _Cleaner()
 	Local $bCanceled = False
 	For $sRoot In $aTargets
 		__Registry_Scan_Recursive($sRoot, $sSearchTerm, $idListView, $iTotalFound, $idStatus, $idBtnCancel)
-		If @error Or GUIGetMsg() = $idBtnCancel Then
+		If @error Then
 			$bCanceled = True
+			ExitLoop
 		EndIf
 	Next
 	If $bCanceled = True Then
