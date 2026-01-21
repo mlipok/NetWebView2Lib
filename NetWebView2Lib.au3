@@ -338,12 +338,12 @@ Func _NetWebView2_ExportPageData(ByRef $oWebV2M, $iFormat, $sFilePath = '')
 	#TODO https://github.com/ioa747/NetWebView2Lib/issues/15
 	#TODO https://github.com/ioa747/NetWebView2Lib/pull/16
 
-	Local Const $s_Prefix = "[_NetWebView2_ExportPageData]:" & " Format:" & $iFormat & " FilePath:" & $sFilePath
+	Local Const $s_Prefix = "[_NetWebView2_ExportPageData]:" & " Format:" & $iFormat & " FilePath:" & (($sFilePath) ? ($sFilePath) : ('"EMPTY"'))
 	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc) ; Local COM Error Handler
 	#forceref $oMyError
 
 	Local $s_Result = $oWebV2M.ExportPageData($iFormat, $sFilePath)
-	If StringInStr($s_Result, 'ERROR:') Then SetError(1)
+	If StringLeft($s_Result, 6) = 'ERROR:' Then SetError(1)
 	__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & " RESULT:" & ((@error) ? ($s_Result) : ("SUCCESS")), 1)
 	Return SetError(@error, @extended, $s_Result)
 EndFunc   ;==>_NetWebView2_ExportPageData
