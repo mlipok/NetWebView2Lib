@@ -76,6 +76,8 @@ Func Manager_OnMessageReceived($sMessage)
 		$bIsInitialized = True ; We note that we are finished.
 		Local $sHTML = "<html><head><meta charset='UTF-8'>" & _FormCSS() & "</head><body>" & _FormHTML() & "</body></html>"
 		$oManager.NavigateToString($sHTML)
+		$oManager.DisableBrowserFeatures()
+		$oManager.LockWebView()
 		GUISetState(@SW_SHOW, $hGUI)
 	EndIf
 EndFunc   ;==>Manager_OnMessageReceived
@@ -204,3 +206,4 @@ Func _ErrFunc($oError)
 			@TAB & "err.scriptline is: " & @TAB & $oError.scriptline & @CRLF & _
 			@TAB & "err.retcode is: " & @TAB & "0x" & Hex($oError.retcode) & @CRLF & @CRLF)
 EndFunc   ;==>_ErrFunc
+
