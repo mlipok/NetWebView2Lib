@@ -24,6 +24,7 @@
 #SciTE4AutoIt3_AutoItIndentFix_debug=n                         ;debug.autoitindentfix=n/y
 
 #include "..\NetWebView2Lib.au3"
+;~ #include "..\NetWebView2Lib-org.au3"
 
 ; ==============================================================================
 ; WebView2 Multi-Channel Presentation Script^
@@ -47,16 +48,17 @@ Func Main()
 	GUICtrlSetFont(-1, 9, 400, 0, "Segoe UI")
 
 	; Initialize WebView2 Manager and register events
+;~ 	Local $oWebV2M = _NetWebView2_CreateManager("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0", "", "--mute-audio")
 	Local $oWebV2M = _NetWebView2_CreateManager("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0", "", "--mute-audio")
 	$_g_oWeb = $oWebV2M
 	If @error Then Return SetError(@error, @extended, $oWebV2M)
 
 	; Initialize JavaScript Bridge
-	Local $oJSBridge = _NetWebView2_GetBridge($oWebV2M, "_BridgeMyEventsHandler_")
+	Local $oJSBridge = _NetWebView2_GetBridge($oWebV2M)
 	If @error Then Return SetError(@error, @extended, $oWebV2M)
 
 	Local $sProfileDirectory = @TempDir & "\NetWebView2Lib-UserDataFolder"
-	_NetWebView2_Initialize($oWebV2M, $hGUI, $sProfileDirectory, 0, 0, 0, 0, True, True, True, 1.2, "0x2B2B2B")
+	_NetWebView2_Initialize($oWebV2M, ($hGUI), $sProfileDirectory, 0, 0, 0, 0, True, True, True, 1.2, "0x2B2B2B")
 
 	GUISetState(@SW_SHOW, $hGUI)
 	WinSetOnTop($hGUI, '', True)
