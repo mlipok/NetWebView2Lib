@@ -46,21 +46,22 @@ Func Main()
 
 	MsgBox($MB_TOPMOST, "TEST #" & @ScriptLineNumber, 'Watch Point')
 
-	WinMove($hGUI, '', Default, Default, 1100, 800)
 	GUISetState(@SW_HIDE, $hGUI)
+	WinMove($hGUI, '', Default, Default, 1100, 800)
 
 	; navigate to a given URL - online content
-;~ 	_NetWebView2_Navigate($_g_oWeb, 'https://www.microsoft.com', $NETWEBVIEW2_MESSAGE__TITLE_CHANGED, 5*1000)
+	_NetWebView2_Navigate($_g_oWeb, 'https://www.microsoft.com', $NETWEBVIEW2_MESSAGE__TITLE_CHANGED, 5 * 1000)
 	GUISetState(@SW_SHOW, $hGUI)
 	MsgBox($MB_TOPMOST, "TEST #" & @ScriptLineNumber, 'Watch Point')
 
 	; navigate to fake/broken url
-;~ 	_NetWebView2_Navigate($oWebV2M, 'htpppps://www.microsoft.com', $NETWEBVIEW2_MESSAGE__COMPLETED)
-	MsgBox($MB_TOPMOST, "TEST #" & @ScriptLineNumber, 'Watch Point')
+;~ 	_NetWebView2_Navigate($oWebV2M, 'htpppps://www.microsoft.com', $NETWEBVIEW2_MESSAGE__TITLE_CHANGED)
+;~ 	MsgBox($MB_TOPMOST, "TEST #" & @ScriptLineNumber, 'Watch Point')
 
 	; navigate to fake/broken url
-;~ 	_NetWebView2_Navigate($oWebV2M, 'https://w2ww.microsoft.com', $NETWEBVIEW2_MESSAGE__COMPLETED, 100)
+;~ 	_NetWebView2_Navigate($oWebV2M, 'https://w2ww.microsoft.com', $NETWEBVIEW2_MESSAGE__TITLE_CHANGED, 100)
 ;~ 	__NetWebView2_Log(@ScriptLineNumber, "After: https://w2ww.microsoft.com", 1)
+;~ 	MsgBox($MB_TOPMOST, "TEST #" & @ScriptLineNumber, 'Watch Point')
 
 	; Main Loop
 	While 1
