@@ -31,7 +31,12 @@ Global Enum _ ; $NETWEBVIEW2_MESSAGE__* are set by __NetWebView2_WebViewEvents__
 		$NETWEBVIEW2_MESSAGE__INIT_READY, _
 		$NETWEBVIEW2_MESSAGE__NAV_STARTING, _
 		$NETWEBVIEW2_MESSAGE__URL_CHANGED, _
-		$NETWEBVIEW2_MESSAGE__COMPLETED, _
+		$NETWEBVIEW2_MESSAGE__SOURCE_CHANGED, _ ; #TODO https://learn.microsoft.com/en-us/microsoft-edge/webview2/get-started/wpf#step-7---navigation-events
+		$NETWEBVIEW2_MESSAGE__CONTENT_LOADING, _ ; #TODO https://learn.microsoft.com/en-us/microsoft-edge/webview2/get-started/wpf#step-7---navigation-events
+		$NETWEBVIEW2_MESSAGE__HISTORY_CHANGED, _ ; #TODO https://learn.microsoft.com/en-us/microsoft-edge/webview2/get-started/wpf#step-7---navigation-events
+		$NETWEBVIEW2_MESSAGE__BASIC_AUTHENTICATION_REQUESTED, _ ; #TODO https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/navigation-events
+		$NETWEBVIEW2_MESSAGE__DOM_CONTENT_LOADED, _ ; #TODO https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/navigation-events
+		$NETWEBVIEW2_MESSAGE__NAVIGATION_COMPLETED, _
 		$NETWEBVIEW2_MESSAGE__TITLE_CHANGED, _
 		$NETWEBVIEW2_MESSAGE__NAV_ERROR, _
 		$NETWEBVIEW2_MESSAGE__EXTENSION, _
@@ -88,7 +93,8 @@ Global Enum _ ; $NETWEBVIEW2_MESSAGE__* are set by __NetWebView2_WebViewEvents__
 Func _NetWebView2_Initialize(ByRef $oWebV2M, $hGUI, $sProfileDirectory, $i_Left = 0, $i_Top = 0, $i_Width = 0, $i_Height = 0, $b_LoadWait = True, $b_SetAutoResize = True, $b_AreDevToolsEnabled = True, $i_ZoomFactor = 1.0, $s_BackColor = "0x2B2B2B")
 	Local Const $s_Prefix = "[_NetWebView2_Initialize]:" & " GUI:" & $hGUI & " ProfileDirectory:" & $sProfileDirectory & " LEFT:" & $i_Left & " TOP:" & $i_Top & " WIDTH" & $i_Width & " HEIGHT:" & $i_Height & " LOADWAIT:" & $b_LoadWait & " SETAUTORESIZE:" & $b_SetAutoResize & " SetAutoResize:" & $b_AreDevToolsEnabled & " ZoomFactor:" & $i_ZoomFactor & " BackColor:" & $s_BackColor
 
-	; Important: Pass $hGUI in parentheses to maintain Pointer type for COM
+	; ⚠️ Important: Enclose ($hGUI) in parentheses to force "Pass-by-Value".
+	; This prevents the COM layer from changing the AutoIt variable type from Ptr to Int64.
 	Local $iInit = $oWebV2M.Initialize(($hGUI), $sProfileDirectory, $i_Left, $i_Top, $i_Width, $i_Height)
 	If @error Then Return SetError(@error, @extended, $iInit)
 
@@ -299,11 +305,11 @@ EndFunc   ;==>_NetWebView2_LoadWait
 ; #FUNCTION# ====================================================================================================================
 ; Name ..........: _NetWebView2_Navigate
 ; Description ...:
-; Syntax ........: _NetWebView2_Navigate(ByRef $oWebV2M, $sURL[, $iWaitMessage = $NETWEBVIEW2_MESSAGE__NAV_ERROR[,
+; Syntax ........: _NetWebView2_Navigate(ByRef $oWebV2M, $sURL[, $iWaitMessage = $NETWEBVIEW2_MESSAGE__TITLE_CHANGED[,
 ;                  $iTimeOut_ms = 0]])
 ; Parameters ....: $oWebV2M             - [in/out] an object.
 ;                  $sURL                - a string value.
-;                  $iWaitMessage      - [optional] an integer value. Default is $NETWEBVIEW2_MESSAGE__NAV_ERROR.
+;                  $iWaitMessage      - [optional] an integer value. Default is $NETWEBVIEW2_MESSAGE__TITLE_CHANGED.
 ;                  $iTimeOut_ms         - [optional] an integer value. Default is 0.
 ; Return values .: None
 ; Author ........: mLipok, ioa747
@@ -313,7 +319,7 @@ EndFunc   ;==>_NetWebView2_LoadWait
 ; Link ..........:
 ; Example .......: No
 ; ===============================================================================================================================
-Func _NetWebView2_Navigate(ByRef $oWebV2M, $sURL, $iWaitMessage = $NETWEBVIEW2_MESSAGE__NAV_ERROR, $iTimeOut_ms = 0)
+Func _NetWebView2_Navigate(ByRef $oWebV2M, $sURL, $iWaitMessage = $NETWEBVIEW2_MESSAGE__TITLE_CHANGED, $iTimeOut_ms = 0)
 	Local Const $s_Prefix = "[_NetWebView2_LoadWait]: URL:" & $sURL & " WAIT:" & $iWaitMessage
 	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc) ; Local COM Error Handler
 	#forceref $oMyError
@@ -322,6 +328,7 @@ Func _NetWebView2_Navigate(ByRef $oWebV2M, $sURL, $iWaitMessage = $NETWEBVIEW2_M
 	__NetWebView2_Log(@ScriptLineNumber, $s_Prefix, 1)
 	If @error Then Return SetError(@error, @extended, $iNavigation)
 
+	If $iWaitMessage = Default Then $iWaitMessage = $NETWEBVIEW2_MESSAGE__TITLE_CHANGED
 	If $iWaitMessage Then _NetWebView2_LoadWait($oWebV2M, $iWaitMessage, $iTimeOut_ms)
 	If @error Then __NetWebView2_Log(@ScriptLineNumber, $s_Prefix, 1)
 	Return SetError(@error, @extended, '')
@@ -397,8 +404,6 @@ EndFunc   ;==>_NetWebView2_NavigateToString
 ; ===============================================================================================================================
 Func _NetWebView2_ExportPageData(ByRef $oWebV2M, $iFormat, $sFilePath = '')
 	#TODO $sParameters - search for  => "name": "captureSnapshot" ; https://github.com/ChromeDevTools/devtools-protocol/blob/master/json/browser_protocol.json
-	#TODO https://github.com/ioa747/NetWebView2Lib/issues/15
-	#TODO https://github.com/ioa747/NetWebView2Lib/pull/16
 
 	Local Const $s_Prefix = "[_NetWebView2_ExportPageData]:" & " Format:" & $iFormat & " FilePath:" & (($sFilePath) ? ($sFilePath) : ('"EMPTY"'))
 	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc) ; Local COM Error Handler
@@ -690,7 +695,7 @@ Func __NetWebView2_WebViewEvents__OnMessageReceived($sMsg)
 
 		Case "NAV_COMPLETED"
 			__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & ' COMMAND:' & $sCommand, 1)
-			__NetWebView2_LastMessageReceived($NETWEBVIEW2_MESSAGE__COMPLETED)
+			__NetWebView2_LastMessageReceived($NETWEBVIEW2_MESSAGE__NAVIGATION_COMPLETED)
 
 		Case "TITLE_CHANGED"
 			__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & ' COMMAND:' & $sCommand, 1)
@@ -919,5 +924,3 @@ Func __NetWebView2_WebViewEvents__OnContextMenu($sMenuData)
 	__NetWebView2_Log(@ScriptLineNumber, $s_Prefix, 1)
 EndFunc   ;==>__NetWebView2_WebViewEvents__OnContextMenu
 #EndRegion ; NetWebView2Lib UDF - === EVENT HANDLERS ===
-
-
