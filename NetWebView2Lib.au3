@@ -100,7 +100,6 @@ Func _NetWebView2_Initialize(ByRef $oWebV2M, $hGUI, $sProfileDirectory, $i_Left 
 	Do ; Wait for the engine to be ready before navigating
 		Sleep(50)
 	Until $b_LoadWait And $oWebV2M.IsReady
-	ConsoleWrite("#" & @ScriptLineNumber & " - " & @CRLF)
 
 	; WebView2 Configuration
 	$oWebV2M.SetAutoResize($b_SetAutoResize) ; Using SetAutoResize(True) to skip WM_SIZE
@@ -1020,4 +1019,5 @@ Func __NetWebView2_WebViewEvents__OnContextMenu($sMenuData)
 	__NetWebView2_Log(@ScriptLineNumber, $s_Prefix, 1)
 EndFunc   ;==>__NetWebView2_WebViewEvents__OnContextMenu
 #EndRegion ; NetWebView2Lib UDF - === EVENT HANDLERS ===
+
 
