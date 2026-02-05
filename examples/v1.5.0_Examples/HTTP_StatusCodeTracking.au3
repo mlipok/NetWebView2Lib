@@ -11,13 +11,13 @@
 #include "..\..\NetWebView2Lib.au3"
 
 ; Register exit function to ensure clean WebView2 shutdown
-OnAutoItExitRegister("_ExitApp")
+OnAutoItExitRegister(_ExitApp)
 
 ; Global objects
 Global $oWeb, $oJS
-Global $oMyError = ObjEvent("AutoIt.Error", "_ErrFunc") ; COM Error Handler
+Global $oMyError = ObjEvent("AutoIt.Error", _ErrFunc) ; COM Error Handler
 Global $g_DebugInfo = True
-Global $g_sProfilePath = @ScriptDir & "\UserDataFolder"
+Global $g_sProfilePath = @ScriptDir & "\..\UserDataFolder"
 Global $hGUI
 
 _Example_HTTP_Tracking()
