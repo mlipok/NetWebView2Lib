@@ -34,7 +34,7 @@ Func _Example()
 	If @error Then Return SetError(@error, @extended, $oWebV2M)
 
 	; initialize browser - put it on the GUI
-	Local $sProfileDirectory = @TempDir & "\NetWebView2Lib-UserDataFolder"
+	Local $sProfileDirectory = @TempDir & "\..\UserDataFolder"
 	_NetWebView2_Initialize($oWebV2M, $hGUI, $sProfileDirectory, 0, 0, 0, 0, True, True, True, 1.2, "0x2B2B2B")
 
 	; show the GUI after browser was fully initialized

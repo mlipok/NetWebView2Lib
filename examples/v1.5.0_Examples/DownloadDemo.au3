@@ -21,7 +21,7 @@ Func _Example()
 
 	#Region ; GUI CREATION
 
-	HotKeySet("{ESC}", "_DownloadCancel")
+	HotKeySet("{ESC}", _DownloadCancel)
 
 	; Create the GUI
 	$hGUI = GUICreate("WebView2 .NET Manager - [ Press ESC to cancell the download ]", 1000, 800)
@@ -36,7 +36,7 @@ Func _Example()
 	If @error Then Return SetError(@error, @extended, $oWebV2M)
 
 	; initialize browser - put it on the GUI
-	Local $sProfileDirectory = @TempDir & "\NetWebView2Lib-UserDataFolder"
+	Local $sProfileDirectory = @TempDir & "\..\NetWebView2Lib-UserDataFolder"
 	_NetWebView2_Initialize($oWebV2M, $hGUI, $sProfileDirectory, 0, 0, 0, 0, True, True, True, 1.2, "0x2B2B2B")
 
 	; show the GUI after browser was fully initialized
@@ -73,43 +73,7 @@ EndFunc   ;==>_Example
 ; EVENT HANDLERS (CALLBACKS)
 ; =======================================================================================
 
-; Listen for Manager OnDownloadStarting Events
-Func __NetWebView2_WebViewEvents__OnDownloadStarting($sUri, $sDefaultPath)
-	ConsoleWrite("-> [OnDownloadStarting]:: $sUri: " & $sUri & ", $sDefaultPath: " & $sDefaultPath & @CRLF)
-
-	; --- STANDARD MODE (EDGE) ---
-	; If you do nothing, Edge will download to the $sDefaultPath.
-	; If you previously set $oWeb.SetDownloadPath("C:\MyFolder"), it will go there.
-
-	; --- MANUAL MODE (BYPASS EDGE) ---
-	; If you want to handle the download yourself with InetGet:
-	; $oWeb.IsDownloadHandled = True
-	; InetGet($sUri, @ScriptDir & "\Manual_Download.zip", 1, 1) ; 1 = wait for completion, 1 = force reload
-	; ConsoleWrite("--> Edge download CANCELLED. AutoIt is handling it via InetGet." & @CRLF)
-
-    ConsoleWrite("<- OnDownloadStarting event finished. Standard Edge download proceeds unless IsDownloadHandled=True." & @CRLF)
-EndFunc
-
-; Listen for Manager OnDownloadStateChanged Events
-Func __NetWebView2_WebViewEvents__OnDownloadStateChanged($sState, $sUri, $iTotalBytes, $iReceivedBytes)
-    Local $iPercent = 0
-    If $iTotalBytes > 0 Then $iPercent = Round(($iReceivedBytes / $iTotalBytes) * 100)
-
-    ; Convert to MB for easy-to-read log
-    Local $fReceivedMB = Round($iReceivedBytes / 1024 / 1024)
-    Local $fTotalMB = Round($iTotalBytes / 1024 / 1024)
-
-    Switch $sState
-        Case "InProgress"
-            ConsoleWrite("++> Downloading: " & $iPercent & "% (" & $fReceivedMB & " / " & $fTotalMB & " MB)" & @CRLF)
-        Case "Interrupted"
-            ConsoleWrite("!!!> DOWNLOAD STOPPED/INTERRUPTED: " & $sUri & @CRLF)
-        Case "Completed"
-            ConsoleWrite("--> DOWNLOAD FINISHED: " & $sUri & @CRLF)
-    EndSwitch
-EndFunc
-
 Func _DownloadCancel()
 	ConsoleWrite("HotKeyPress: _DownloadCancel" & @CRLF)
 	$_g_oWeb.CancelDownloads("https://fosszone.csd.auth.gr/tdf/libreoffice/stable/25.8.4/win/x86_64/LibreOffice_25.8.4_Win_x86-64.msi")
-EndFunc
+EndFunc   ;==>_DownloadCancel
