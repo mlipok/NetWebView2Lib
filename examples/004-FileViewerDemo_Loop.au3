@@ -1,4 +1,4 @@
-#AutoIt3Wrapper_UseX64=y
+#AutoIt3Wrapper_UseX64=n
 #AutoIt3Wrapper_Run_AU3Check=Y
 #AutoIt3Wrapper_AU3Check_Stop_OnWarning=y
 #AutoIt3Wrapper_AU3Check_Parameters=-d -w 1 -w 2 -w 3 -w 4 -w 5 -w 6 -w 7
@@ -93,17 +93,8 @@ Func _Example()
 	GUIDelete($hMainGUIWindow)
 EndFunc   ;==>_Example
 
-Func _EnumWindow($hWnd)
-	Local $aData = _WinAPI_EnumChildWindows($hWnd)
-	ConsoleWrite("! $aData[1][0] = " & $aData[1][0] & @CRLF)
-;~ 	_ArrayDisplay($aData, '_WinAPI_EnumChildWindows')
-
-	If Not @error And UBound($aData) Then Return $aData[1][0]
-
-	Return SetError(1, @extended, False)
-EndFunc   ;==>_EnumWindow
-
 Func __NetWebView2_freezer($oWebV2M, ByRef $idPic)
+	#TODO  https://github.com/ioa747/NetWebView2Lib/issues/52#issuecomment-3864784975
 	Local $hWebView2_Window = HWnd("0x" & Hex($oWebV2M.BrowserWindowHandle, 16))
 	#Region ; if $idPic is given then it means you already have it and want to delete it - unfreeze - show WebView2 content
 	If $idPic Then
