@@ -31,14 +31,7 @@
 
 #include "..\NetWebView2Lib.au3"
 
-; ==============================================================================
-; WebView2 Multi-Channel Presentation Script^
-; ==============================================================================
-
-; Global objects
-
-; GUI & Controls
-Global $hGUI, $idLabelStatus
+Global $idLabelStatus
 
 Main()
 
@@ -48,7 +41,7 @@ Func Main()
 
 	; Create the UI
 	Local $iHeight = 800
-	$hGUI = GUICreate("WebView2 .NET Manager - Demo: " & @ScriptName, 1100, $iHeight, -1, -1, BitOR($WS_OVERLAPPEDWINDOW, $WS_CLIPCHILDREN))
+	Local $hGUI = GUICreate("WebView2 .NET Manager - Demo: " & @ScriptName, 1100, $iHeight, -1, -1, BitOR($WS_OVERLAPPEDWINDOW, $WS_CLIPCHILDREN))
 	$idLabelStatus = GUICtrlCreateLabel("Status: Initializing Engine...", 10, $iHeight - 20, 880, 20)
 	GUICtrlSetFont(-1, 9, 400, 0, "Segoe UI")
 
@@ -56,7 +49,7 @@ Func Main()
 	Local $oWebV2M = _NetWebView2_CreateManager("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0", "", "--mute-audio")
 	If @error Then Return SetError(@error, @extended, $oWebV2M)
 
-;~ 	; Initialize JavaScript Bridge
+;~ 	; Initialize JavaScript Bridge ; not needed in this example
 ;~ 	Local $oJSBridge = _NetWebView2_GetBridge($oWebV2M)
 ;~ 	If @error Then Return SetError(@error, @extended, $oWebV2M)
 
@@ -95,7 +88,8 @@ Func Main()
 
 	GUIDelete($hGUI)
 
-	_NetWebView2_CleanUp($oWebV2M)
+	Local $oJSBridge
+	_NetWebView2_CleanUp($oWebV2M, $oJSBridge)
 EndFunc   ;==>Main
 
 Func _GetFirstChildWindowHWND($hWnd)
@@ -113,7 +107,6 @@ Func __WebView2_freezer($hMainGUI_Window, $hWebView2_Window)
 	Local $aPos = WinGetPos($hWebView2_Window)
 
 	Local $hPrev = GUISwitch($hMainGUI_Window)
-;~     Local $idPic = GUICtrlCreatePic('', $aPos[0], $aPos[1], $aPos[2], $aPos[3])
 	Local $idPic = GUICtrlCreatePic('', 0, 0, $aPos[2], $aPos[3])
 	Local $hPic = GUICtrlGetHandle($idPic)
 	GUISwitch($hPrev)
