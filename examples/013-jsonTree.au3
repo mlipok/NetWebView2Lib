@@ -118,8 +118,8 @@ Func _Web_jsonTree(ByRef $oWebV2M, $sJavaScripton)
 	$sJavaScripton = $oJSON.GetMinifiedJson()
 
 	; 2. Load local library files
-	Local $sJavaScriptLib = FileRead(@ScriptDir & ".\JS_Lib\jsonTree.js")
-	Local $sCssLib = FileRead(@ScriptDir & ".\JS_Lib\jsonTreeDark.css")
+	Local Static $sJavaScriptLib = FileRead(@ScriptDir & "\JS_Lib\jsonTree\jsonTree.js")
+	Local Static $sCssLib = FileRead(@ScriptDir & "\JS_Lib\jsonTree\jsonTreeDark.css")
 
 	; 3. Build HTML with embedded Logic
 	Local $sHTML = "<html><head><meta charset=""utf-8""><style>" & _
