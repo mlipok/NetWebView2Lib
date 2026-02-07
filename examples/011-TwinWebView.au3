@@ -31,6 +31,7 @@ Global $hID1, $hID2
 Global $hMainGUI, $hSplitter, $hSplitterHandle
 Global $g_iSplitRatio = 0.5 ; Initial 50/50 split
 Global $bIsDragging = False
+Global $sProfileDirectory = @ScriptDir & "\NetWebView2Lib-UserDataFolder"
 
 _MainGUI()
 
@@ -169,8 +170,8 @@ Func _InitBrowsers() ; Creates child window containers and initializes WebView2 
 	ObjEvent($oWeb1, "Web1_", "IWebViewEvents")
 	$oBridge1 = $oWeb1.GetBridge()
 	ObjEvent($oBridge1, "Bridge1_", "IBridgeEvents")
-	$Bar1.Web_ProfilePath = @ScriptDir & "\Profile_1"
-	$oWeb1.Initialize($hID1, @ScriptDir & "\Profile_1", 0, 25, 485, 555)
+	$Bar1.Web_ProfilePath = $sProfileDirectory
+	$oWeb1.Initialize($hID1, $sProfileDirectory, 0, 25, 485, 555)
 
 	; Instance 2 - "Profile_2" folder
 	$hID2 = GUICreate("", 485, 580, 505, 10, BitOR($WS_CHILD, $WS_CLIPCHILDREN), -1, $hMainGUI)
