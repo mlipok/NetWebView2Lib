@@ -86,8 +86,8 @@ EndFunc   ;==>_GetDemoHTML
 
 #Region ; USER DEFINED EVENTS HANDLER FUNCTION
 ; BROWSER 1 - Manager Events
-Func __UserEventHandler_Web1__Manager__OnMessageReceived($oWebView, $hGUI, $sMsg)
-	#forceref $hGUI
+Func __UserEventHandler_Web1__Manager__OnMessageReceived($oWebView, $hWindow, $sMsg)
+	#forceref $hWindow
 	ConsoleWrite(">> [Browser 1]: " & (StringLen($sMsg) > 150 ? StringLeft($sMsg, 150) & "..." : $sMsg) & @CRLF)
 	If $sMsg = "INIT_READY" Then
 		_NetWebView2_ExecuteScript($oWebView, 'window.chrome.webview.postMessage(JSON.stringify({ "type": "COM_TEST", "status": "OK" }));', $NETWEBVIEW2_EXECUTEJS_MODE0_FIREANDFORGET)
@@ -95,26 +95,31 @@ Func __UserEventHandler_Web1__Manager__OnMessageReceived($oWebView, $hGUI, $sMsg
 EndFunc   ;==>__UserEventHandler_Web1__Manager__OnMessageReceived
 
 ; BROWSER 1 - JavaScript Bridge Events
-Func __UserEventHandler_Web1__Bridge__OnMessageReceived($oWebView, $hGUI, $sMsg)
+Func __UserEventHandler_Web1__Bridge__OnMessageReceived($oWebView, $hWindow, $sMsg)
 	Local Static $iMsgCnt = -1
 	ConsoleWrite(">> [JS 1]: " & (StringLen($sMsg) > 150 ? StringLeft($sMsg, 150) & "..." : $sMsg) & @CRLF)
 
 	If $sMsg = "CLOSE_APP" Then
-		If MsgBox(36, "Confirm", "Close this Browser Instance?", 0, $hGUI) = 6 Then
+		If MsgBox(36, "Confirm", "Close this Browser Instance?", 0, $hWindow) = 6 Then
 			$oWebView.Cleanup()
-			GUIDelete($hGUI)
+			GUIDelete($hWindow)
 			ConsoleWrite("!> Browser 1 has been shut down." & @CRLF)
 		EndIf
 	Else
 		$iMsgCnt += 1
 		UpdateWebUI($oWebView, "mainTitle", "Counter: " & $iMsgCnt)
 		UpdateWebUI($oWebView, "statusMsg", "Last Message: " & $sMsg)
+		If $sMsg = "PING" Then
+			GUISetState(@SW_HIDE, $hWindow)
+			Sleep(200)
+			GUISetState(@SW_SHOW, $hWindow)
+		EndIf
 	EndIf
 EndFunc   ;==>__UserEventHandler_Web1__Bridge__OnMessageReceived
 
 ; BROWSER 2 - Manager Events
-Func __UserEventHandler_Web2__Manager__OnMessageReceived($oWebView, $hGUI, $sMsg)
-	#forceref $hGUI
+Func __UserEventHandler_Web2__Manager__OnMessageReceived($oWebView, $hWindow, $sMsg)
+	#forceref $hWindow
 	ConsoleWrite(">> [Browser 2]: " & (StringLen($sMsg) > 150 ? StringLeft($sMsg, 150) & "..." : $sMsg) & @CRLF)
 	If $sMsg = "INIT_READY" Then
 		_NetWebView2_ExecuteScript($oWebView, 'window.chrome.webview.postMessage(JSON.stringify({ "type": "COM_TEST", "status": "OK" }));', $NETWEBVIEW2_EXECUTEJS_MODE0_FIREANDFORGET)
@@ -136,6 +141,11 @@ Func __UserEventHandler_Web2__Bridge__OnMessageReceived($oWebView, $hWindow, $sM
 		$iMsgCnt += 1
 		UpdateWebUI($oWebView, "mainTitle", "Counter: " & $iMsgCnt)
 		UpdateWebUI($oWebView, "statusMsg", "Last Message: " & $sMsg)
+		If $sMsg = "PING" Then
+			GUISetState(@SW_HIDE, $hWindow)
+			Sleep(200)
+			GUISetState(@SW_SHOW, $hWindow)
+		EndIf
 	EndIf
 EndFunc   ;==>__UserEventHandler_Web2__Bridge__OnMessageReceived
 #EndRegion ; USER DEFINED EVENTS HANDLER FUNCTION
