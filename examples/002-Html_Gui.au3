@@ -64,7 +64,7 @@ Func _Show_Form()
 	If @error Then Return SetError(@error, @extended, '')
 
 	; initialize browser - put it on the GUI
-	Local $sProfileDirectory = @TempDir & "\UserDataFolder"
+	Local $sProfileDirectory = @TempDir & "\NetWebView2Lib-UserDataFolder"
 	_NetWebView2_Initialize($oWebV2M, $hGUI, $sProfileDirectory, 0, 30, 450, 430, True, False, False, 1.1)
 	If @error Then Return SetError(@error, @extended, '')
 
@@ -83,7 +83,7 @@ EndFunc   ;==>_Show_Form
 ; Handles data received from the JavaScript 'postMessage'
 Func __MyEVENTS_Bridge_OnMessageReceived($oWebV2M, $hGUI, $sMessage) ; fork from __NetWebView2_JSEvents__OnMessageReceived()
 	#forceref $hGUI
-	__Example_Log(@ScriptLineNumber, "$sMessage=" & $sMessage & @CRLF)
+	__Example_Log(@ScriptLineNumber, "$sMessage=" & $sMessage)
 
 	; Check for the specific form submission prefix
 	If StringLeft($sMessage, 12) = "SUBMIT_FORM:" Then
