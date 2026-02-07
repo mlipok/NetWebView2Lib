@@ -1254,7 +1254,7 @@ Func __NetWebView2_Events__OnNavigationCompleted($oWebV2M, $hGUI, $bIsSuccess, $
 	#forceref $oWebV2M
 
 	$hGUI = HWnd("0x" & Hex($hGUI, 16))
-	Local Const $s_Prefix = "[NetWebView2Lib:EVENT: OnNavigationCompleted]: GUI:" & $hGUI & " " & ($bIsSuccess ? "SUCCESS" : "ERROR (" & $iWebErrorStatus & ")")
+	Local Const $s_Prefix = "[NetWebView2Lib:EVENT: OnNavigationCompleted]: GUI:" & $hGUI & " " & ($bIsSuccess ? "SUCCESS" : "ERROR ( WebErrorStatus:" & $iWebErrorStatus & ")")
 	__NetWebView2_Log(@ScriptLineNumber, (StringLen($s_Prefix) > 150 ? StringLeft($s_Prefix, 150) & "..." : $s_Prefix), 1)
 	__NetWebView2_LastMessageReceived($NETWEBVIEW2_MESSAGE__NAVIGATION_COMPLETED)
 EndFunc   ;==>__NetWebView2_Events__OnNavigationCompleted
@@ -1299,7 +1299,7 @@ Func __NetWebView2_Events__OnDownloadStateChanged($oWebV2M, $hGUI, $sState, $sUR
 	$hGUI = HWnd("0x" & Hex($hGUI, 16))
 	Local Const $s_Prefix = "[NetWebView2Lib:EVENT: OnDownloadStateChanged]: GUI:" & $hGUI & " State: " & $sState & " URL: " & $sURL & " Total_Bytes: " & $iTotal_Bytes & " Received_Bytes: " & $iReceived_Bytes
 	Local $iPercent = 0
-	If $iTotal_Bytes > 0 Then $iPercent = Round(($iReceived_Bytes / $iTotal_Bytes) * 100)
+	If $iTotal_Bytes > 0 Then $iPercent = Round(($iReceived_Bytes / $iTotal_Bytes), 5) * 100
 
 	; Convert to MB for easy-to-read log
 	Local $iReceived_MegaBytes = Round($iReceived_Bytes / 1024 / 1024)
