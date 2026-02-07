@@ -19,7 +19,8 @@ _Example()
 
 Func _Example()
 
-	Local $oWebV2M = _Show_Form()
+	Local $oWebV2M, $oBridge
+	_Create_Form($oWebV2M, $oBridge)
 	If @error Then Return SetError(@error, @extended, '')
 
 	; main Application Loop
@@ -40,11 +41,10 @@ Func _Example()
 		EndSwitch
 	WEnd
 
-	Local $oJSBridge
-	_NetWebView2_CleanUp($oWebV2M, $oJSBridge)
+	_NetWebView2_CleanUp($oWebV2M, $oBridge)
 EndFunc   ;==>_Example
 
-Func _Show_Form()
+Func _Create_Form(ByRef $oWebV2M, ByRef $oBridge)
 	; Create GUI with resizing support
 	Local $hGUI = GUICreate("WebView2 Theme Switcher", 450, 460)
 	GUISetBkColor(0x1E1E1E)
@@ -60,7 +60,7 @@ Func _Show_Form()
 	GUICtrlSetColor(-1, 0xFF0000)
 
 	; Create WebView2 Manager object and register events
-	Local $oWebV2M = _NetWebView2_CreateManager("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0", "", "")
+	$oWebV2M = _NetWebView2_CreateManager("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0", "", "")
 	If @error Then Return SetError(@error, @extended, '')
 
 	; initialize browser - put it on the GUI
@@ -71,14 +71,13 @@ Func _Show_Form()
 	$oWebV2M.IsZoomControlEnabled = False
 
 	; Create bridge object and register events
-	Local $oBridge = _NetWebView2_GetBridge($oWebV2M, "__MyEVENTS_Bridge_")
+	$oBridge = _NetWebView2_GetBridge($oWebV2M, "__MyEVENTS_Bridge_")
 	#forceref $oBridge
 
 	Local $sHTML = "<html><head><meta charset='UTF-8'><style>:" & __FormCSS() & "</style></head><body>" & __FormHTML() & "</body></html>"
 	$oWebV2M.NavigateToString($sHTML)
 	GUISetState(@SW_SHOW, $hGUI)
-	Return $oWebV2M
-EndFunc   ;==>_Show_Form
+EndFunc   ;==>_Create_Form
 
 ; Handles data received from the JavaScript 'postMessage'
 Func __MyEVENTS_Bridge_OnMessageReceived($oWebV2M, $hGUI, $sMessage) ; fork from __NetWebView2_JSEvents__OnMessageReceived()
