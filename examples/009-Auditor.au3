@@ -16,6 +16,7 @@ Global $g_bHighlight = 0
 Global $g_bHideAllPopups = 0
 Global $g_bAdBlock = 0
 Global $g_bDarkMode = 0
+Global $sProfileDirectory = @ScriptDir & "\NetWebView2Lib-UserDataFolder"
 
 #Region ; === GUI ===
 Local $hGUI = GUICreate("AutoIt Auditor", 1100, 850, -1, -1, BitOR($WS_OVERLAPPEDWINDOW, $WS_CLIPCHILDREN))
@@ -140,7 +141,7 @@ $oEvtBridge = ObjEvent($oBridge, "Bridge_", "IBridgeEvents")
 
 ; ⚠️ Important: Enclose ($hGUI) in parentheses to force "Pass-by-Value".
 ; This prevents the COM layer from changing the AutoIt variable type from Ptr to Int64.
-$oManager.Initialize(($hGUI), @ScriptDir & "\Profile_Auditor", 420, 45, 670, 795)
+$oManager.Initialize(($hGUI), $sProfileDirectory, 420, 45, 670, 795)
 
 ; Register Resize Event
 GUIRegisterMsg($WM_SIZE, "WM_SIZE")
