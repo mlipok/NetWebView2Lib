@@ -13,15 +13,16 @@
 ; Global variables for data management
 Global $aMessages[0][3]
 Global $sFilePath = @ScriptDir & "\messages.csv"
-Global $hGUI, $oWebV2M, $oBridge, $idBlue, $idRed
+Global $idBlue, $idRed
 
-Main()
+_Example()
 
-Func Main()
+Func _Example()
 
-	_Show_Form()
+	Local $oWebV2M = _Show_Form()
+	If @error Then Return SetError(@error, @extended, '')
 
-	; Main Application Loop
+	; main Application Loop
 	While 1
 		Switch GUIGetMsg()
 			Case $GUI_EVENT_CLOSE
@@ -39,12 +40,13 @@ Func Main()
 		EndSwitch
 	WEnd
 
-	_NetWebView2_CleanUp($oWebV2M)
-EndFunc   ;==>Main
+	Local $oJSBridge
+	_NetWebView2_CleanUp($oWebV2M, $oJSBridge)
+EndFunc   ;==>_Example
 
 Func _Show_Form()
 	; Create GUI with resizing support
-	$hGUI = GUICreate("WebView2 Theme Switcher", 450, 460)
+	Local $hGUI = GUICreate("WebView2 Theme Switcher", 450, 460)
 	GUISetBkColor(0x1E1E1E)
 
 	$idBlue = GUICtrlCreateLabel("Blue Theme", 10, 10, 100, 30)
@@ -58,27 +60,30 @@ Func _Show_Form()
 	GUICtrlSetColor(-1, 0xFF0000)
 
 	; Create WebView2 Manager object and register events
-	$oWebV2M = _NetWebView2_CreateManager("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0", "__MyEVENTS_Manager_", "")
+	Local $oWebV2M = _NetWebView2_CreateManager("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0", "", "")
+	If @error Then Return SetError(@error, @extended, '')
 
 	; initialize browser - put it on the GUI
-	Local $sProfileDirectory = @TempDir & "\NetWebView2Lib-UserDataFolder"
+	Local $sProfileDirectory = @TempDir & "\UserDataFolder"
 	_NetWebView2_Initialize($oWebV2M, $hGUI, $sProfileDirectory, 0, 30, 450, 430, True, False, False, 1.1)
+	If @error Then Return SetError(@error, @extended, '')
 
 	$oWebV2M.IsZoomControlEnabled = False
 
 	; Create bridge object and register events
-	$oBridge = _NetWebView2_GetBridge($oWebV2M, "__MyEVENTS_Bridge_")
+	Local $oBridge = _NetWebView2_GetBridge($oWebV2M, "__MyEVENTS_Bridge_")
+	#forceref $oBridge
 
 	Local $sHTML = "<html><head><meta charset='UTF-8'><style>:" & __FormCSS() & "</style></head><body>" & __FormHTML() & "</body></html>"
 	$oWebV2M.NavigateToString($sHTML)
 	GUISetState(@SW_SHOW, $hGUI)
-
+	Return $oWebV2M
 EndFunc   ;==>_Show_Form
 
 ; Handles data received from the JavaScript 'postMessage'
-Func __MyEVENTS_Bridge_OnMessageReceived($oWebV2M, $hGUI, $sMessage)
-	#forceref $oWebV2M, $hGUI
-	ConsoleWrite("$sMessage=" & $sMessage & @CRLF)
+Func __MyEVENTS_Bridge_OnMessageReceived($oWebV2M, $hGUI, $sMessage) ; fork from __NetWebView2_JSEvents__OnMessageReceived()
+	#forceref $hGUI
+	__Example_Log(@ScriptLineNumber, "$sMessage=" & $sMessage & @CRLF)
 
 	; Check for the specific form submission prefix
 	If StringLeft($sMessage, 12) = "SUBMIT_FORM:" Then
@@ -106,10 +111,10 @@ Func __MyEVENTS_Bridge_OnMessageReceived($oWebV2M, $hGUI, $sMessage)
 					FileClose($hFile)
 				EndIf
 
-				ShowWebNotification("Data Saved Successfully!")
+				ShowWebNotification($oWebV2M, "Data Saved Successfully!")
 			Else
 				; Trigger a visual notification inside the WebView
-				ShowWebNotification("Please enter valid data", '#d70000')
+				ShowWebNotification($oWebV2M, "Please enter valid data", '#d70000')
 			EndIf
 		EndIf
 	EndIf
@@ -197,7 +202,7 @@ Func __FormHTML()
 EndFunc   ;==>__FormHTML
 
 ; Injects a temporary notification box into the web page
-Func ShowWebNotification($sMessage, $sBgColor = "#4CAF50", $iDuration = 3000)
+Func ShowWebNotification($oWebV2M, $sMessage, $sBgColor = "#4CAF50", $iDuration = 3000)
 	; Local error handler for COM objects
 	Local $oMyError = ObjEvent("AutoIt.Error", __HtmlGUI_ErrFunc)
 	#forceref $oMyError
@@ -234,3 +239,8 @@ Func __HtmlGUI_ErrFunc($oError)
 			@TAB & "err.scriptline is: " & @TAB & $oError.scriptline & @CRLF & _
 			@TAB & "err.retcode is: " & @TAB & "0x" & Hex($oError.retcode) & @CRLF & @CRLF)
 EndFunc   ;==>__HtmlGUI_ErrFunc
+
+Func __Example_Log($s_ScriptLineNumber, $sString, $iError = @error, $iExtended = @extended)
+	ConsoleWrite(@ScriptName & ' SLN=' & $s_ScriptLineNumber & ' [' & $iError & '/' & $iExtended & '] ::: ' & $sString & @CRLF)
+	Return SetError($iError, $iExtended, '')
+EndFunc   ;==>__Example_Log
