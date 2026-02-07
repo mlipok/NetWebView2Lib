@@ -403,10 +403,11 @@ EndFunc   ;==>_NetWebView2_GetSource
 ; #FUNCTION# ====================================================================================================================
 ; Name ..........: _NetWebView2_NavigateToString
 ; Description ...:
-; Syntax ........: _NetWebView2_NavigateToString($oWebV2M, $s_HTML[, $b_LoadWait = True[, $iTimeOut_ms = 5000]])
+; Syntax ........: _NetWebView2_NavigateToString($oWebV2M, $s_HTML[, $iWaitMessage = $NETWEBVIEW2_MESSAGE__INIT_READY[,
+;                  $iTimeOut_ms = 5000]])
 ; Parameters ....: $oWebV2M             - an object.
 ;                  $s_HTML              - a string value.
-;                  $b_LoadWait          - [optional] a boolean value. Default is True.
+;                  $iWaitMessage        - [optional] an integer value. Default is $NETWEBVIEW2_MESSAGE__INIT_READY.
 ;                  $iTimeOut_ms         - [optional] an integer value. Default is 5000.
 ; Return values .: None
 ; Author ........: mLipok, ioa747
@@ -416,17 +417,23 @@ EndFunc   ;==>_NetWebView2_GetSource
 ; Link ..........:
 ; Example .......: No
 ; ===============================================================================================================================
-Func _NetWebView2_NavigateToString($oWebV2M, $s_HTML, $b_LoadWait = True, $iTimeOut_ms = 5000)
-	Local Const $s_Prefix = "[_NetWebView2_NavigateToString]:" & " HTML Size:" & StringLen($s_HTML) & " LoadWait:" & $b_LoadWait & " TimeOut_ms=" & $iTimeOut_ms
+Func _NetWebView2_NavigateToString($oWebV2M, $s_HTML, $iWaitMessage = $NETWEBVIEW2_MESSAGE__INIT_READY, $iTimeOut_ms = 5000)
+	Local Const $s_Prefix = "[_NetWebView2_NavigateToString]:" & " HTML Size:" & StringLen($s_HTML) & " WaitMessage:" & $iWaitMessage & " TimeOut_ms=" & $iTimeOut_ms
 	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc) ; Local COM Error Handler
 	#forceref $oMyError
 
-	Local $iNavigation = $oWebV2M.NavigateToString($s_HTML)
-	If @error Then Return SetError(@error, @extended, $iNavigation)
+	If $iWaitMessage < $NETWEBVIEW2_MESSAGE__INIT_READY Then
+		Return SetError(1)
+	ElseIf $iWaitMessage > $NETWEBVIEW2_MESSAGE__NAV_ERROR Then ; higher messsages are not for NAVIGATION thus not checking in _NetWebView2_LoadWait()
+		Return SetError(2)
+	Else
+		Local $iNavigation = $oWebV2M.NavigateToString($s_HTML)
+		If @error Then Return SetError(@error, @extended, $iNavigation)
 
-	If $b_LoadWait Then _NetWebView2_LoadWait($oWebV2M, $NETWEBVIEW2_MESSAGE__TITLE_CHANGED, $iTimeOut_ms)
-	If @error Then __NetWebView2_Log(@ScriptLineNumber, $s_Prefix, 1)
-	Return SetError(@error, @extended, '')
+		_NetWebView2_LoadWait($oWebV2M, $iWaitMessage, $iTimeOut_ms)
+		If @error Then __NetWebView2_Log(@ScriptLineNumber, $s_Prefix, 1)
+		Return SetError(@error, @extended, '')
+	EndIf
 EndFunc   ;==>_NetWebView2_NavigateToString
 
 ; #FUNCTION# ====================================================================================================================
