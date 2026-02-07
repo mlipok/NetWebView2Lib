@@ -26,7 +26,7 @@ Func _Example()
 	If @error Then Return SetError(@error, @extended, $oWebV2M)
 
 	; initialize browser - put it on the GUI
-	Local $sProfileDirectory = @TempDir & "\NetWebView2Lib-UserDataFolder"
+	Local $sProfileDirectory = @ScriptDir & "\NetWebView2Lib-UserDataFolder"
 	_NetWebView2_Initialize($oWebV2M, $hGUI, $sProfileDirectory, 0, 0, 0, 0, True, True, True, 1.2, "0x2B2B2B")
 
 	; show the GUI after browser was fully initialized
@@ -40,10 +40,7 @@ Func _Example()
 	#Region ; PDF
 	; get Browser content as PDF Base64 encoded binary data
 	Local $s_PDF_FileFullPath = @ScriptDir & '\5-SaveDemo_result.pdf'
-	Local $dPDF_asBase64 = _NetWebView2_PrintToPdfStream($oWebV2M)
-
-	; decode Base64 encoded data do Binary
-	Local $dBinaryDataToWrite = _NetWebView2_DecodeB64ToBinary($oWebV2M, $dPDF_asBase64)
+	Local $dBinaryDataToWrite = _NetWebView2_PrintToPdfStream($oWebV2M, True)
 
 	; finally save PDF to FILE
 	Local $hFile = FileOpen($s_PDF_FileFullPath, $FO_OVERWRITE + $FO_BINARY)
@@ -90,4 +87,3 @@ Func _Example()
 	#EndRegion ; GUI Loop
 
 EndFunc   ;==>_Example
-
