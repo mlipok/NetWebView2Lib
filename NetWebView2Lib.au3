@@ -1326,10 +1326,21 @@ Func __NetWebView2_Events__OnDownloadStateChanged($oWebV2M, $hGUI, $sState, $sUR
 EndFunc   ;==>__NetWebView2_Events__OnDownloadStateChanged
 
 Func __NetWebView2_Events__OnAcceleratorKeyPressed($oWebV2M, $hGUI, $oArgs)
-	#forceref $oWebV2M
-
 	$hGUI = HWnd("0x" & Hex($hGUI, 16))
-	Local Const $s_Prefix = "[NetWebView2Lib:EVENT: OnAcceleratorKeyPressed]: GUI:" & $hGUI & " ARGS: " & ((IsObj($oArgs)) ? ('OBJECT') : ('ERRROR'))
+	Local Const $sArgsList = '[Handled=' & $oArgs.Handled & '; KeyEventKind=' & $oArgs.KeyEventKind & '; KeyEventLParam=' & $oArgs.KeyEventLParam & '; VirtualKey=' & $oArgs.VirtualKey & ']'
+	Local Const $s_Prefix = "[NetWebView2Lib:EVENT: OnAcceleratorKeyPressed]: GUI:" & $hGUI & " ARGS: " & ((IsObj($oArgs)) ? ($sArgsList) : ('ERRROR'))
+	#forceref $oWebV2M
+;~ 	https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2acceleratorkeypressedeventargs?view=webview2-dotnet-1.0.705.50
+;~ 	ConsoleWrite($oArgs.Handled & @CRLF) ; Indicates whether the AcceleratorKeyPressed event is handled by host.
+;~ 	ConsoleWrite($oArgs.KeyEventKind & @CRLF) ; Gets the key event kind that caused the event to run
+;~ 	ConsoleWrite($oArgs.KeyEventLParam & @CRLF) ; Gets the LPARAM value that accompanied the window message.
+;~ 	ConsoleWrite('>> PhysicalKeyStatus=' & $oArgs.PhysicalKeyStatus & @CRLF) ; Gets a CoreWebView2PhysicalKeyStatus representing the information passed in the LPARAM of the window message. ==> ; https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2physicalkeystatus?view=webview2-dotnet-1.0.705.50
+;~ 	ConsoleWrite($oArgs.VirtualKey & @CRLF) ; Gets the Win32 virtual key code of the key that was pressed or released.
+
+	If $oArgs.VirtualKey = 27 Then ; ESC 27 1b 033 Escape, next character is not echoed ; https://www.autoitscript.com/autoit3/docs/appendix/ascii.htm
+;~ 		$oWebV2M.CancelDownloads($_sURLDownload_InProgress)
+	EndIf
+
 	__NetWebView2_Log(@ScriptLineNumber, (StringLen($s_Prefix) > 150 ? StringLeft($s_Prefix, 150) & "..." : $s_Prefix), 1)
 EndFunc   ;==>__NetWebView2_Events__OnAcceleratorKeyPressed
 #EndRegion ; NetWebView2Lib UDF - === EVENT HANDLERS ===

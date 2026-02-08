@@ -148,6 +148,7 @@ EndFunc   ;==>__NetWebView2_freezer
 
 Func _NetWebView2_NavigateToPDF($oWebV2M, $s_URL_or_FileFullPath, Const $s_Parameters = '', Const $iSleep_ms = 1000, Const $bFreeze = True)
 	If FileExists($s_URL_or_FileFullPath) Then
+		$s_URL_or_FileFullPath = StringReplace($s_URL_or_FileFullPath, '\', '/')
 		$s_URL_or_FileFullPath = StringReplace($s_URL_or_FileFullPath, ' ', '%20')
 		$s_URL_or_FileFullPath = "file:///" & $s_URL_or_FileFullPath
 	EndIf
