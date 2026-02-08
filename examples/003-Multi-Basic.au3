@@ -9,9 +9,9 @@
 #include <GUIConstantsEx.au3>
 #include "..\NetWebView2Lib.au3"
 
-Main()
+_Main()
 
-Func Main()
+Func _Main()
 	; --- Main GUI Setup ---
 	Local $hMainGUI = GUICreate("Multi-WebView2 v2.0.0 Standard", 1000, 600, -1, -1, BitOR($WS_OVERLAPPEDWINDOW, $WS_CLIPCHILDREN))
 	GUISetState(@SW_SHOW, $hMainGUI)
@@ -41,31 +41,17 @@ Func Main()
 	; CleanUp
 	_NetWebView2_CleanUp($oWeb_1, $oBridge_1)
 ;~ 	_NetWebView2_CleanUp($oWeb_2, $oBridge_2)
-EndFunc   ;==>Main
+EndFunc   ;==>_Main
 
 ; ==============================================================================
 ; UPDATED HELPERS
 ; ==============================================================================
 
-Func UpdateWebUI($oManager, $sElementId, $sNewText)
+Func _UpdateWebUI($oManager, $sElementId, $sNewText)
 	If Not IsObj($oManager) Then Return
 	Local $sJS = StringFormat("document.getElementById('%s').innerText = '%s';", $sElementId, $sNewText)
 	_NetWebView2_ExecuteScript($oManager, $sJS, $NETWEBVIEW2_EXECUTEJS_MODE0_FIREANDFORGET)
-EndFunc   ;==>UpdateWebUI
-
-Func _NetWebView2_BrowserSetupWrapper($hOuterParentWindow, ByRef $oOuterWeb, $sEventPrefix, $sProfile, ByRef $oOuterBridge, ByRef $hInnerWebViewWindow, $iX, $iY, $iW, $iH, $s_AddBrowserArgs)
-	$hInnerWebViewWindow = GUICreate("", $iW, $iH, $iX, $iY, $WS_CHILD, -1, $hOuterParentWindow)
-	GUISetState(@SW_SHOW, $hInnerWebViewWindow)
-
-	$oOuterWeb = _NetWebView2_CreateManager("", $sEventPrefix & '_Manager__', $s_AddBrowserArgs)
-	If @error Then Return SetError(@error, @extended, $oOuterWeb)
-
-	Local $Result = _NetWebView2_Initialize($oOuterWeb, $hInnerWebViewWindow, $sProfile, 0, 0, $iW, $iH)
-	If @error Then Return SetError(@error, @extended, $Result)
-
-	$oOuterBridge = _NetWebView2_GetBridge($oOuterWeb, $sEventPrefix & "_Bridge__")
-	If @error Then Return SetError(@error, @extended, $oOuterBridge)
-EndFunc   ;==>_NetWebView2_BrowserSetupWrapper
+EndFunc   ;==>_UpdateWebUI
 
 Func _GetDemoHTML($sTitle)
 	Return '<html><title>Simple GUI</title><head><style>' & _
@@ -86,36 +72,41 @@ EndFunc   ;==>_GetDemoHTML
 
 #Region ; USER DEFINED EVENTS HANDLER FUNCTION
 ; BROWSER 1 - Manager Events
-Func __UserEventHandler_Web1__Manager__OnMessageReceived($oWebView, $hGUI, $sMsg)
-	#forceref $hGUI
-	ConsoleWrite("- [Browser 1]: " & (StringLen($sMsg) > 150 ? StringLeft($sMsg, 150) & "..." : $sMsg) & @CRLF)
+Func __UserEventHandler_Web1__Manager__OnMessageReceived($oWebView, $hWindow, $sMsg)
+	#forceref $hWindow
+	ConsoleWrite(">> [Browser 1]: " & (StringLen($sMsg) > 150 ? StringLeft($sMsg, 150) & "..." : $sMsg) & @CRLF)
 	If $sMsg = "INIT_READY" Then
 		_NetWebView2_ExecuteScript($oWebView, 'window.chrome.webview.postMessage(JSON.stringify({ "type": "COM_TEST", "status": "OK" }));', $NETWEBVIEW2_EXECUTEJS_MODE0_FIREANDFORGET)
 	EndIf
 EndFunc   ;==>__UserEventHandler_Web1__Manager__OnMessageReceived
 
 ; BROWSER 1 - JavaScript Bridge Events
-Func __UserEventHandler_Web1__Bridge__OnMessageReceived($oWebView, $hGUI, $sMsg)
+Func __UserEventHandler_Web1__Bridge__OnMessageReceived($oWebView, $hWindow, $sMsg)
 	Local Static $iMsgCnt = -1
 	ConsoleWrite(">> [JS 1]: " & (StringLen($sMsg) > 150 ? StringLeft($sMsg, 150) & "..." : $sMsg) & @CRLF)
 
 	If $sMsg = "CLOSE_APP" Then
-		If MsgBox(36, "Confirm", "Close this Browser Instance?", 0, $hGUI) = 6 Then
+		If MsgBox(36, "Confirm", "Close this Browser Instance?", 0, $hWindow) = 6 Then
 			$oWebView.Cleanup()
-			GUIDelete($hGUI)
+			GUIDelete($hWindow)
 			ConsoleWrite("!> Browser 1 has been shut down." & @CRLF)
 		EndIf
 	Else
 		$iMsgCnt += 1
-		UpdateWebUI($oWebView, "mainTitle", "Counter: " & $iMsgCnt)
-		UpdateWebUI($oWebView, "statusMsg", "Last Message: " & $sMsg)
+		_UpdateWebUI($oWebView, "mainTitle", "Counter: " & $iMsgCnt)
+		_UpdateWebUI($oWebView, "statusMsg", "Last Message: " & $sMsg)
+		If $sMsg = "PING" Then
+			GUISetState(@SW_HIDE, $hWindow)
+			Sleep(200)
+			GUISetState(@SW_SHOW, $hWindow)
+		EndIf
 	EndIf
 EndFunc   ;==>__UserEventHandler_Web1__Bridge__OnMessageReceived
 
 ; BROWSER 2 - Manager Events
-Func __UserEventHandler_Web2__Manager__OnMessageReceived($oWebView, $hGUI, $sMsg)
-	#forceref $hGUI
-	ConsoleWrite("- [Browser 2]: " & (StringLen($sMsg) > 150 ? StringLeft($sMsg, 150) & "..." : $sMsg) & @CRLF)
+Func __UserEventHandler_Web2__Manager__OnMessageReceived($oWebView, $hWindow, $sMsg)
+	#forceref $hWindow
+	ConsoleWrite(">> [Browser 2]: " & (StringLen($sMsg) > 150 ? StringLeft($sMsg, 150) & "..." : $sMsg) & @CRLF)
 	If $sMsg = "INIT_READY" Then
 		_NetWebView2_ExecuteScript($oWebView, 'window.chrome.webview.postMessage(JSON.stringify({ "type": "COM_TEST", "status": "OK" }));', $NETWEBVIEW2_EXECUTEJS_MODE0_FIREANDFORGET)
 	EndIf
@@ -134,8 +125,13 @@ Func __UserEventHandler_Web2__Bridge__OnMessageReceived($oWebView, $hWindow, $sM
 		EndIf
 	Else
 		$iMsgCnt += 1
-		UpdateWebUI($oWebView, "mainTitle", "Counter: " & $iMsgCnt)
-		UpdateWebUI($oWebView, "statusMsg", "Last Message: " & $sMsg)
+		_UpdateWebUI($oWebView, "mainTitle", "Counter: " & $iMsgCnt)
+		_UpdateWebUI($oWebView, "statusMsg", "Last Message: " & $sMsg)
+		If $sMsg = "PING" Then
+			GUISetState(@SW_HIDE, $hWindow)
+			Sleep(200)
+			GUISetState(@SW_SHOW, $hWindow)
+		EndIf
 	EndIf
 EndFunc   ;==>__UserEventHandler_Web2__Bridge__OnMessageReceived
 #EndRegion ; USER DEFINED EVENTS HANDLER FUNCTION

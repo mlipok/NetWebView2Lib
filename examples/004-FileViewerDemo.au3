@@ -31,24 +31,17 @@
 
 #include "..\NetWebView2Lib.au3"
 
-; ==============================================================================
-; WebView2 Multi-Channel Presentation Script^
-; ==============================================================================
+Global $idLabelStatus
 
-; Global objects
+_Example()
 
-; GUI & Controls
-Global $hGUI, $idLabelStatus
-
-Main()
-
-Func Main()
+Func _Example()
 	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc)
 	#forceref $oMyError
 
 	; Create the UI
 	Local $iHeight = 800
-	$hGUI = GUICreate("WebView2 .NET Manager - Demo: " & @ScriptName, 1100, $iHeight, -1, -1, BitOR($WS_OVERLAPPEDWINDOW, $WS_CLIPCHILDREN))
+	Local $hGUI = GUICreate("WebView2 .NET Manager - Demo: " & @ScriptName, 1100, $iHeight, -1, -1, BitOR($WS_OVERLAPPEDWINDOW, $WS_CLIPCHILDREN))
 	$idLabelStatus = GUICtrlCreateLabel("Status: Initializing Engine...", 10, $iHeight - 20, 880, 20)
 	GUICtrlSetFont(-1, 9, 400, 0, "Segoe UI")
 
@@ -56,15 +49,15 @@ Func Main()
 	Local $oWebV2M = _NetWebView2_CreateManager("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0", "", "--mute-audio")
 	If @error Then Return SetError(@error, @extended, $oWebV2M)
 
-;~ 	; Initialize JavaScript Bridge
+;~ 	; Initialize JavaScript Bridge ; not needed in this example
 ;~ 	Local $oJSBridge = _NetWebView2_GetBridge($oWebV2M)
 ;~ 	If @error Then Return SetError(@error, @extended, $oWebV2M)
 
-	Local $sProfileDirectory = @TempDir & "\..\UserDataFolder"
+	Local $sProfileDirectory = @ScriptDir & "\NetWebView2Lib-UserDataFolder"
 	_NetWebView2_Initialize($oWebV2M, $hGUI, $sProfileDirectory, 0, 0, 0, $iHeight - 20, True, True, True, 1.2, "0x2B2B2B")
 
 	GUISetState(@SW_SHOW, $hGUI)
-	WinSetOnTop($hGUI, '', True)
+	WinSetOnTop($hGUI, '', $WINDOWS_ONTOP)
 
 	Local $s_PDF_FileFullPath
 
@@ -93,27 +86,15 @@ Func Main()
 		EndSwitch
 	WEnd
 
+	Local $oJSBridge
+	_NetWebView2_CleanUp($oWebV2M, $oJSBridge)
 	GUIDelete($hGUI)
-
-	_NetWebView2_CleanUp($oWebV2M)
-EndFunc   ;==>Main
-
-Func _GetFirstChildWindowHWND($hWnd)
-	Local $aData = _WinAPI_EnumChildWindows($hWnd)
-	ConsoleWrite("! $aData[1][0] = " & $aData[1][0] & @CRLF)
-;~  _ArrayDisplay($aData, '_WinAPI_EnumChildWindows')
-
-	If Not @error And UBound($aData) Then Return $aData[1][0]
-
-	Return SetError(1, @extended, False)
-EndFunc   ;==>_GetFirstChildWindowHWND
-
+EndFunc   ;==>_Example
 
 Func __WebView2_freezer($hMainGUI_Window, $hWebView2_Window)
 	Local $aPos = WinGetPos($hWebView2_Window)
 
 	Local $hPrev = GUISwitch($hMainGUI_Window)
-;~     Local $idPic = GUICtrlCreatePic('', $aPos[0], $aPos[1], $aPos[2], $aPos[3])
 	Local $idPic = GUICtrlCreatePic('', 0, 0, $aPos[2], $aPos[3])
 	Local $hPic = GUICtrlGetHandle($idPic)
 	GUISwitch($hPrev)
