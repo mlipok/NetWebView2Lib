@@ -87,20 +87,22 @@ Func __UserEventHandler__OnDownloadStateChanged($oWebV2M, $hGUI, $sState, $sURL,
 		Case "Interrupted"
 			ProgressSet(100, "Done", "Interrupted")
 			Sleep(3000)
+			ProgressOff()
 			$bProgres_State = 0
 			$_sURLDownload_InProgress = ''
 		Case "Completed"
 			ProgressSet(100, "Done", "Completed")
 			Sleep(3000)
+			ProgressOff()
 			$bProgres_State = 0
 			$_sURLDownload_InProgress = ''
 	EndSwitch
 EndFunc   ;==>__UserEventHandler__OnDownloadStateChanged
 
 Func __UserEventHandler__OnAcceleratorKeyPressed($oWebV2M, $hGUI, $oArgs)
-	#forceref $oWebV2M
+	$hGUI = HWnd("0x" & Hex($hGUI, 16))
+	Local Const $s_Prefix = "[USER:EVENT: OnAcceleratorKeyPressed]: GUI:" & $hGUI & " ARGS: " & ((IsObj($oArgs)) ? ('OBJECT') : ('ERRROR'))
 
-	#TODO parse $oArgs to check if ESC KEY is pressed ==> $oWeb.CancelDownloads("https://fosszone.csd.auth.gr/tdf/libreoffice/stable/25.8.4/win/x86_64/LibreOffice_25.8.4_Win_x86-64.msi")
 ;~ 	https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2acceleratorkeypressedeventargs?view=webview2-dotnet-1.0.705.50
 	ConsoleWrite($oArgs.Handled & @CRLF) ; Indicates whether the AcceleratorKeyPressed event is handled by host.
 	ConsoleWrite($oArgs.KeyEventKind & @CRLF) ; Gets the key event kind that caused the event to run
@@ -112,7 +114,5 @@ Func __UserEventHandler__OnAcceleratorKeyPressed($oWebV2M, $hGUI, $oArgs)
 		$oWebV2M.CancelDownloads($_sURLDownload_InProgress)
 	EndIf
 
-	$hGUI = HWnd("0x" & Hex($hGUI, 16))
-	Local Const $s_Prefix = "[USER:EVENT: OnAcceleratorKeyPressed]: GUI:" & $hGUI & " ARGS: " & ((IsObj($oArgs)) ? ('OBJECT') : ('ERRROR'))
 	__NetWebView2_Log(@ScriptLineNumber, (StringLen($s_Prefix) > 150 ? StringLeft($s_Prefix, 150) & "..." : $s_Prefix), 1)
 EndFunc   ;==>__UserEventHandler__OnAcceleratorKeyPressed
