@@ -101,7 +101,8 @@ EndFunc   ;==>__UserEventHandler__OnDownloadStateChanged
 
 Func __UserEventHandler__OnAcceleratorKeyPressed($oWebV2M, $hGUI, $oArgs)
 	$hGUI = HWnd("0x" & Hex($hGUI, 16))
-	Local Const $s_Prefix = "[USER:EVENT: OnAcceleratorKeyPressed]: GUI:" & $hGUI & " ARGS: " & ((IsObj($oArgs)) ? ('OBJECT') : ('ERRROR'))
+	Local Const $sArgsList = '[Handled=' & $oArgs.Handled & '; KeyEventKind=' & $oArgs.KeyEventKind & '; KeyEventLParam=' & $oArgs.KeyEventLParam & '; VirtualKey=' & $oArgs.VirtualKey & ']'
+	Local Const $s_Prefix = "[USER:EVENT: OnAcceleratorKeyPressed]: GUI:" & $hGUI & " ARGS: " & ((IsObj($oArgs)) ? ($sArgsList) : ('ERRROR'))
 
 ;~ 	https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2acceleratorkeypressedeventargs?view=webview2-dotnet-1.0.705.50
 	ConsoleWrite($oArgs.Handled & @CRLF) ; Indicates whether the AcceleratorKeyPressed event is handled by host.
