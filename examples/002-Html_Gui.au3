@@ -71,16 +71,16 @@ Func _Create_Form(ByRef $oWebV2M, ByRef $oBridge)
 	$oWebV2M.IsZoomControlEnabled = False
 
 	; Create bridge object and register events
-	$oBridge = _NetWebView2_GetBridge($oWebV2M, "__MyEVENTS_Bridge_")
+	$oBridge = _NetWebView2_GetBridge($oWebV2M, "__USER_Events_Bridge_")
 	#forceref $oBridge
 
 	Local $sHTML = "<html><head><meta charset='UTF-8'><style>:" & __FormCSS() & "</style></head><body>" & __FormHTML() & "</body></html>"
-	$oWebV2M.NavigateToString($sHTML)
+	_NetWebView2_NavigateToString($oWebV2M, $sHTML, $NETWEBVIEW2_MESSAGE__TITLE_CHANGED, 5000)
 	GUISetState(@SW_SHOW, $hGUI)
 EndFunc   ;==>_Create_Form
 
 ; Handles data received from the JavaScript 'postMessage'
-Func __MyEVENTS_Bridge_OnMessageReceived($oWebV2M, $hGUI, $sMessage) ; fork from __NetWebView2_JSEvents__OnMessageReceived()
+Func __USER_Events_Bridge_OnMessageReceived($oWebV2M, $hGUI, $sMessage) ; fork from __NetWebView2_JSEvents__OnMessageReceived()
 	#forceref $hGUI
 	__Example_Log(@ScriptLineNumber, "$sMessage=" & $sMessage)
 
@@ -117,7 +117,7 @@ Func __MyEVENTS_Bridge_OnMessageReceived($oWebV2M, $hGUI, $sMessage) ; fork from
 			EndIf
 		EndIf
 	EndIf
-EndFunc   ;==>__MyEVENTS_Bridge_OnMessageReceived
+EndFunc   ;==>__USER_Events_Bridge_OnMessageReceived
 
 ; Generates the CSS block with dynamic variables
 Func __FormCSS()
