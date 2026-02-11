@@ -1140,9 +1140,8 @@ Volatile Func __NetWebView2_Events__OnMessageReceived($oWebV2M, $hGUI, $sMsg)
 	Local $aParts
 
 	Local Static $sCommand_static = ''
-
-	If Not @Compiled And $sCommand_static <> $sCommand Then
-;~ 		ConsoleWrite('TEST IFNC: ' & $s_Prefix & ' @SLN=' & @ScriptLineNumber & ' ' & $sCommand & ' Data=' & (StringLen($sData) > 120 ? StringLeft($sData, 120) & "..." : $sData) & @CRLF) ; FOR DEV TESTING ONLY
+	If Not @Compiled And $sCommand_static <> $sCommand Then ; show the log in non compiled - for DEV only
+		ConsoleWrite('TEST IFNC: ' & $s_Prefix & ' @SLN=' & @ScriptLineNumber & ' ' & $sCommand & ' Data=' & (StringLen($sData) > 120 ? StringLeft($sData, 120) & "..." : $sData) & @CRLF) ; FOR DEV TESTING ONLY
 		$sCommand_static = $sCommand
 	EndIf
 
@@ -1523,5 +1522,6 @@ Volatile Func __NetWebView2_Events__OnAcceleratorKeyPressed($oWebV2M, $hGUI, $oA
 	$oArgs = 0 ; Explicitly release the COM reference inside the volatile scopeEndFunc
 EndFunc   ;==>__NetWebView2_Events__OnAcceleratorKeyPressed
 #EndRegion ; NetWebView2Lib UDF - === EVENT HANDLERS ===
+
 
 
