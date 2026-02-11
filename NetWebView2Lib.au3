@@ -26,6 +26,11 @@
 ; Global objects
 Global $_g_bNetWebView2_DebugInfo = True
 
+Global Enum _
+		$NETWEBVIEW2_ERR__INIT_FAILED, _
+		$NETWEBVIEW2_ERR__PROFILE_NOT_READY, _
+		$NETWEBVIEW2_ERR___FAKE_COUNTER
+
 Global Enum _ ; $NETWEBVIEW2_MESSAGE__* are set by __NetWebView2_Events__OnMessageReceived()
 		$NETWEBVIEW2_MESSAGE__NONE, _ ; UDF setting - not related directly to API REFERENCES
 		$NETWEBVIEW2_MESSAGE__INIT_FAILED, _
@@ -155,8 +160,13 @@ Func _NetWebView2_Initialize($oWebV2M, $hGUI, $s_ProfileDirectory, $i_Left = 0, 
 	Local $iInit = $oWebV2M.Initialize(($hGUI), $s_ProfileDirectory, $i_Left, $i_Top, $i_Width, $i_Height)
 	If @error Then Return SetError(@error, @extended, $iInit)
 
+	Local $iMessage
 	Do ; Wait for the engine to be ready before navigating
 		Sleep(50)
+		$iMessage = __NetWebView2_LastMessageReceived($oWebV2M)
+		If $iMessage = $NETWEBVIEW2_MESSAGE__INIT_FAILED Or $iMessage = $NETWEBVIEW2_MESSAGE__PROFILE_NOT_READY Then
+			Return SetError($NETWEBVIEW2_ERR__INIT_FAILED, @extended, '')
+		EndIf
 	Until $b_LoadWait And $oWebV2M.IsReady
 
 	; WebView2 Configuration
@@ -1124,17 +1134,18 @@ Volatile Func __NetWebView2_Events__OnMessageReceived($oWebV2M, $hGUI, $sMsg)
 	$hGUI = HWnd("0x" & Hex($hGUI, 16))
 	Local Const $s_Prefix = "[NetWebView2Lib:EVENT: OnMessageReceived]: GUI:" & $hGUI
 
-	Local $iSplitPos = StringInStr($sMsg, "|")
+	#Region ; Message parsing
+	Local $iSplitPos = StringSplit($sMsg, "|")
 	Local $sCommand = $iSplitPos ? StringStripWS(StringLeft($sMsg, $iSplitPos - 1), 3) : $sMsg
 	Local $sData = $iSplitPos ? StringTrimLeft($sMsg, $iSplitPos) : ""
 	Local $aParts
 
 	Local Static $sCommand_static = ''
-
-	If Not @Compiled And $sCommand_static <> $sCommand Then
-;~ 		ConsoleWrite('TEST IFNC: ' & $s_Prefix & ' @SLN=' & @ScriptLineNumber & ' ' & $sCommand & ' Data=' & (StringLen($sData) > 120 ? StringLeft($sData, 120) & "..." : $sData) & @CRLF) ; FOR DEV TESTING ONLY
+	If Not @Compiled And $sCommand_static <> $sCommand Then ; show the log in non compiled - for DEV only
+		ConsoleWrite('TEST IFNC: ' & $s_Prefix & ' @SLN=' & @ScriptLineNumber & ' ' & $sCommand & ' Data=' & (StringLen($sData) > 120 ? StringLeft($sData, 120) & "..." : $sData) & @CRLF) ; FOR DEV TESTING ONLY
 		$sCommand_static = $sCommand
 	EndIf
+	#EndRegion ; Message parsing
 
 	Switch $sCommand
 		Case "WINDOW_RESIZED"
@@ -1281,7 +1292,7 @@ Volatile Func __NetWebView2_Events__OnMessageReceived($oWebV2M, $hGUI, $sMsg)
 ;~ 			__NetWebView2_LastMessageReceived($oWebV2M, $NETWEBVIEW2_MESSAGE__*)
 
 		Case Else
-			__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & (StringLen($sMsg) > 150 ? StringLeft($sMsg, 150) & "..." : $sMsg), 1)
+			__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & " " & (StringLen($sMsg) > 150 ? StringLeft($sMsg, 150) & "..." : $sMsg), 1)
 	EndSwitch
 
 EndFunc   ;==>__NetWebView2_Events__OnMessageReceived
@@ -1513,4 +1524,8 @@ Volatile Func __NetWebView2_Events__OnAcceleratorKeyPressed($oWebV2M, $hGUI, $oA
 	$oArgs = 0 ; Explicitly release the COM reference inside the volatile scopeEndFunc
 EndFunc   ;==>__NetWebView2_Events__OnAcceleratorKeyPressed
 #EndRegion ; NetWebView2Lib UDF - === EVENT HANDLERS ===
+
+
+
+
 
