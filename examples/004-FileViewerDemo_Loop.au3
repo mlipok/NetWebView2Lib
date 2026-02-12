@@ -39,7 +39,7 @@ Func _Example()
 	; Create the UI
 	Local $iHeight = 800
 	Local $hMainGUIWindow = GUICreate("WebView2 .NET Manager - Demo: " & @ScriptName, 1100, $iHeight, -1, -1, BitOR($WS_OVERLAPPEDWINDOW, $WS_CLIPCHILDREN))
-	Local $idLabelStatus = GUICtrlCreateLabel("Status: Initializing Engine...", 10, $iHeight - 20, 880, 20)
+	Local $idLabelStatus = GUICtrlCreateLabel("Status: Initializing Engine...", 10, $iHeight - 20, 1080, 20)
 	GUICtrlSetFont(-1, 9, 400, 0, "Segoe UI")
 
 	; Initialize WebView2 Manager and register events
