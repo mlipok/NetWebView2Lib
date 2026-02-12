@@ -38,10 +38,11 @@ Global Enum _ ; $NETWEBVIEW2_MESSAGE__* are set by __NetWebView2_Events__OnMessa
 		$NETWEBVIEW2_MESSAGE__SOURCE_CHANGED, _ ; #TODO https://learn.microsoft.com/en-us/microsoft-edge/webview2/get-started/wpf#step-7---navigation-events
 		$NETWEBVIEW2_MESSAGE__CONTENT_LOADING, _ ; #TODO https://learn.microsoft.com/en-us/microsoft-edge/webview2/get-started/wpf#step-7---navigation-events
 		$NETWEBVIEW2_MESSAGE__HISTORY_CHANGED, _ ; #TODO https://learn.microsoft.com/en-us/microsoft-edge/webview2/get-started/wpf#step-7---navigation-events
-		$NETWEBVIEW2_MESSAGE__BASIC_AUTHENTICATION_REQUESTED, _ ; #TODO https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/navigation-events
+		$NETWEBVIEW2_MESSAGE__BASIC_AUTHENTICATION_REQUESTED, _ ; #TODO WHERE THIS SHOULD be Lower/Higher ?
 		$NETWEBVIEW2_MESSAGE__DOM_CONTENT_LOADED, _ ; #TODO https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/navigation-events
 		$NETWEBVIEW2_MESSAGE__NAVIGATION_COMPLETED, _
 		$NETWEBVIEW2_MESSAGE__TITLE_CHANGED, _
+		$NETWEBVIEW2_MESSAGE__PROCESS_FAILED, _ ; #TODO WHERE THIS SHOULD be Lower/Higher ?
 		$NETWEBVIEW2_MESSAGE__NAV_ERROR, _
 		$NETWEBVIEW2_MESSAGE__EXTENSION, _
 		$NETWEBVIEW2_MESSAGE__EXTENSION_LOADED, _
