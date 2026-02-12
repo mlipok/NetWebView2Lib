@@ -46,6 +46,8 @@ Func _Example()
 	Local $oWebV2M = _NetWebView2_CreateManager("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0", "", "--mute-audio")
 	If @error Then Return SetError(@error, @extended, $oWebV2M)
 
+	ConsoleWrite("! " & _NetWebView2_GetVersion($oWebV2M) & @CRLF)
+
 ;~ 	; Initialize JavaScript Bridge
 ;~ 	Local $oJSBridge = _NetWebView2_GetBridge($oWebV2M, "_BridgeMyEventsHandler_")
 ;~ 	If @error Then Return SetError(@error, @extended, $oWebV2M)
@@ -98,14 +100,14 @@ Func __NetWebView2_freezer($oWebV2M, ByRef $idPic)
 	Local Static $iStep = 1
 	#TODO  https://github.com/ioa747/NetWebView2Lib/issues/52#issuecomment-3864784975
 	Local $hWebView2_Window = $oWebV2M.BrowserWindowHandle
-	If Not @compiled Then ConsoleWrite("! IFNC Test 1 : " & $hWebView2_Window & @CRLF)
-	If Not @compiled Then ConsoleWrite("! IFNC Test 1 : " & IsHWnd($hWebView2_Window) & @CRLF)
-	$hWebView2_Window = StringRegExpReplace($hWebView2_Window, '(?i)(.+:)(.+)(])','$2')
-	If Not @compiled Then ConsoleWrite("! IFNC Test 2 : " & $hWebView2_Window & @CRLF)
-	If Not @compiled Then ConsoleWrite("! IFNC Test 2 : " & IsHWnd($hWebView2_Window) & @CRLF)
+	If Not @Compiled Then ConsoleWrite("! IFNC Test 1 : " & $hWebView2_Window & @CRLF)
+	If Not @Compiled Then ConsoleWrite("! IFNC Test 1 : " & IsHWnd($hWebView2_Window) & @CRLF)
+	$hWebView2_Window = StringRegExpReplace($hWebView2_Window, '(?i)(.+:)(.+)(])', '$2')
+	If Not @Compiled Then ConsoleWrite("! IFNC Test 2 : " & $hWebView2_Window & @CRLF)
+	If Not @Compiled Then ConsoleWrite("! IFNC Test 2 : " & IsHWnd($hWebView2_Window) & @CRLF)
 	$hWebView2_Window = HWnd($hWebView2_Window)
-	If Not @compiled Then ConsoleWrite("! IFNC Test 3 : " & $hWebView2_Window & @CRLF)
-	If Not @compiled Then ConsoleWrite("! IFNC Test 3 : " & IsHWnd($hWebView2_Window) & @CRLF)
+	If Not @Compiled Then ConsoleWrite("! IFNC Test 3 : " & $hWebView2_Window & @CRLF)
+	If Not @Compiled Then ConsoleWrite("! IFNC Test 3 : " & IsHWnd($hWebView2_Window) & @CRLF)
 
 ;~ 	Local $hWebView2_Window = HWnd("0x" & Hex($oWebV2M.BrowserWindowHandle, 16))
 ;~ 	Local $hWebView2_Window = HWnd("0x" & Hex($oWebV2M.BrowserWindowHandle, 16))
@@ -129,7 +131,7 @@ Func __NetWebView2_freezer($oWebV2M, ByRef $idPic)
 	#Region ; freeze $hWebView2_Window
 
 	MsgBox($MB_TOPMOST, "STEP " & $iStep & " TEST #" & @ScriptLineNumber, 'BEFORE Disabled')
-		$iStep += 1
+	$iStep += 1
 	#Region ; add PIC to parent window
 	Local $hMainGUI_Window = _WinAPI_GetWindow($hWebView2_Window, $GW_HWNDPREV)
 	Local $aPos = WinGetPos($hWebView2_Window)
@@ -167,7 +169,7 @@ Func __NetWebView2_freezer($oWebV2M, ByRef $idPic)
 
 	_SendMessage($hWebView2_Window, $WM_SETREDRAW, False, 0) ; Disables ; https://www.autoitscript.com/forum/topic/199172-disable-gui-updating-repainting/
 	MsgBox($MB_TOPMOST, "STEP " & $iStep & " TEST #" & @ScriptLineNumber, 'AFTER Disabled')
-		$iStep += 1
+	$iStep += 1
 	Return $idPic
 	#EndRegion ; freeze $hWebView2_Window
 EndFunc   ;==>__NetWebView2_freezer
