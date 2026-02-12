@@ -14,7 +14,6 @@
 #include <WindowsConstants.au3>
 
 #REMARK This UDF is marked as WorkInProgress - you may use them, but do not blame me if I do ScriptBreakingChange and as so far do not ask me for description or help till I remove this remark ; mLipok
-
 #TODO UDF HEADER - anybody - feel free to make it done - just do not hesitate to full fill this part
 #TODO UDF INDEX - anybody - feel free to make it done - just do not hesitate to full fill this part
 #TODO FUNCTION HEADERS SUPLEMENTATION & CHECK - anybody - feel free to make it done - just do not hesitate to full fill this part
@@ -39,12 +38,12 @@ Global Enum _ ; $NETWEBVIEW2_MESSAGE__* are set by mainly by __NetWebView2_Event
 		$NETWEBVIEW2_MESSAGE__CONTENT_LOADING, _ ; #TODO https://learn.microsoft.com/en-us/microsoft-edge/webview2/get-started/wpf#step-7---navigation-events
 		$NETWEBVIEW2_MESSAGE__HISTORY_CHANGED, _ ; #TODO https://learn.microsoft.com/en-us/microsoft-edge/webview2/get-started/wpf#step-7---navigation-events
 		$NETWEBVIEW2_MESSAGE__BASIC_AUTHENTICATION_REQUESTED, _ ; #TODO WHERE THIS SHOULD be Lower/Higher ?
-		$NETWEBVIEW2_MESSAGE__DOM_CONTENT_LOADED, _ ; #TODO https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/navigation-events
 		$NETWEBVIEW2_MESSAGE__PROCESS_FAILED, _
 		$NETWEBVIEW2_MESSAGE__CRITICAL_ERROR, _
-		$NETWEBVIEW2_MESSAGE__NAVIGATION_COMPLETED, _
-		$NETWEBVIEW2_MESSAGE__TITLE_CHANGED, _
+		$NETWEBVIEW2_MESSAGE__DOM_CONTENT_LOADED, _ ; #TODO https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/navigation-events
 		$NETWEBVIEW2_MESSAGE__NAV_ERROR, _
+		$NETWEBVIEW2_MESSAGE__NAV_COMPLETED, _
+		$NETWEBVIEW2_MESSAGE__TITLE_CHANGED, _
 		$NETWEBVIEW2_MESSAGE__EXTENSION, _
 		$NETWEBVIEW2_MESSAGE__EXTENSION_LOADED, _
 		$NETWEBVIEW2_MESSAGE__EXTENSION_FAILED, _
@@ -101,7 +100,7 @@ Global Enum _ ; Indicates the reason for the process failure.
 		$NETWEBVIEW2_PROCESS_FAILED_REASON_CRASHED, _
 		$NETWEBVIEW2_PROCESS_FAILED_REASON_LAUNCH_FAILED, _
 		$NETWEBVIEW2_PROCESS_FAILED_REASON_OUT_OF_MEMORY
-
+#EndRegion ; ENUMS
 
 #Region ; NetWebView2Lib UDF - _NetWebView2_* core functions
 ; #FUNCTION# ====================================================================================================================
@@ -1252,7 +1251,7 @@ Volatile Func __NetWebView2_Events__OnMessageReceived($oWebV2M, $hGUI, $sMsg)
 
 		Case "NAV_COMPLETED"
 			__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & ' COMMAND:' & $sCommand, 1)
-			__NetWebView2_LastMessageReceived($oWebV2M, $NETWEBVIEW2_MESSAGE__NAVIGATION_COMPLETED)
+			__NetWebView2_LastMessageReceived($oWebV2M, $NETWEBVIEW2_MESSAGE__NAV_COMPLETED)
 
 		Case "TITLE_CHANGED"
 			__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & ' COMMAND:' & $sCommand, 1)
@@ -1591,7 +1590,7 @@ EndFunc   ;==>__NetWebView2_Events__OnNavigationStarting
 Volatile Func __NetWebView2_Events__OnNavigationCompleted($oWebV2M, $hGUI, $bIsSuccess, $iWebErrorStatus)
 	Local Const $s_Prefix = "[NetWebView2Lib:EVENT: OnNavigationCompleted]: GUI:" & $hGUI & " " & ($bIsSuccess ? "SUCCESS" : "ERROR ( WebErrorStatus:" & $iWebErrorStatus & ")")
 	__NetWebView2_Log(@ScriptLineNumber, (StringLen($s_Prefix) > 150 ? StringLeft($s_Prefix, 150) & "..." : $s_Prefix), 1)
-	__NetWebView2_LastMessageReceived($oWebV2M, $NETWEBVIEW2_MESSAGE__NAVIGATION_COMPLETED)
+	__NetWebView2_LastMessageReceived($oWebV2M, $NETWEBVIEW2_MESSAGE__NAV_COMPLETED)
 EndFunc   ;==>__NetWebView2_Events__OnNavigationCompleted
 
 ; #INTERNAL_USE_ONLY# ===========================================================================================================
@@ -1806,7 +1805,8 @@ EndFunc   ;==>__NetWebView2_Events__OnProcessFailed
 ; Return values .: None
 ; Author ........: ioa747
 ; Modified ......:
-; Remarks .......:
+; Remarks .......: The host can provide a response with credentials for the authentication or cancel the request.
+;                  If the host sets the Cancel property to false but does not provide either UserName or Password properties on the Response property, then WebView2 will show the default authentication challenge dialog prompt to the user.
 ; Related .......:
 ; Link ..........: https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2.basicauthenticationrequested?view=webview2-dotnet-1.0.2903.40
 ; Example .......: No
