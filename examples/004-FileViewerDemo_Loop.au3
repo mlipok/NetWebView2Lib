@@ -74,7 +74,7 @@ Func _Example()
 
 			$s_PDF_FileFullPath = $a_Files[$IDX_File]
 			GUICtrlSetData($idLabelStatus, $sProgress & ' - Navigation started: ' & $s_PDF_FileFullPath)
-			_NetWebView2_NavigateToPDF($oWebV2M, $s_PDF_FileFullPath, '#view=FitH', 1000)
+			_NetWebView2_NavigateToPDF($oWebV2M, $s_PDF_FileFullPath, '#view=FitH', 1000, True)
 			GUICtrlSetData($idLabelStatus, $sProgress & ' - Navigation completed: ' & $s_PDF_FileFullPath)
 			ConsoleWrite("! === @SLN=" & @ScriptLineNumber & ' ' & $s_PDF_FileFullPath & @CRLF)
 			If $bSleep_UserReaction Then Sleep(2000) ; simulates user reaction on PDF
@@ -95,8 +95,18 @@ Func _Example()
 EndFunc   ;==>_Example
 
 Func __NetWebView2_freezer($oWebV2M, ByRef $idPic)
+	Local Static $iStep = 1
 	#TODO  https://github.com/ioa747/NetWebView2Lib/issues/52#issuecomment-3864784975
 	Local $hWebView2_Window = $oWebV2M.BrowserWindowHandle
+	If Not @compiled Then ConsoleWrite("! IFNC Test 1 : " & $hWebView2_Window & @CRLF)
+	If Not @compiled Then ConsoleWrite("! IFNC Test 1 : " & IsHWnd($hWebView2_Window) & @CRLF)
+	$hWebView2_Window = StringRegExpReplace($hWebView2_Window, '(?i)(.+:)(.+)(])','$2')
+	If Not @compiled Then ConsoleWrite("! IFNC Test 2 : " & $hWebView2_Window & @CRLF)
+	If Not @compiled Then ConsoleWrite("! IFNC Test 2 : " & IsHWnd($hWebView2_Window) & @CRLF)
+	$hWebView2_Window = HWnd($hWebView2_Window)
+	If Not @compiled Then ConsoleWrite("! IFNC Test 2 : " & $hWebView2_Window & @CRLF)
+	If Not @compiled Then ConsoleWrite("! IFNC Test 2 : " & IsHWnd($hWebView2_Window) & @CRLF)
+
 ;~ 	Local $hWebView2_Window = HWnd("0x" & Hex($oWebV2M.BrowserWindowHandle, 16))
 ;~ 	Local $hWebView2_Window = HWnd("0x" & Hex($oWebV2M.BrowserWindowHandle, 16))
 ;~ 	Local $hWebView2_Window = HWnd(Hex($oWebV2M.BrowserWindowHandle, 16))
@@ -104,19 +114,26 @@ Func __NetWebView2_freezer($oWebV2M, ByRef $idPic)
 ;~ 	Local $hWebView2_Window = HWnd($oWebV2M.BrowserWindowHandle)
 	#Region ; if $idPic is given then it means you already have it and want to delete it - unfreeze - show WebView2 content
 	If $idPic Then
+		MsgBox($MB_TOPMOST, "STEP " & $iStep & " TEST #" & @ScriptLineNumber, 'Before ENABLED')
+		$iStep += 1
 		_SendMessage($hWebView2_Window, $WM_SETREDRAW, True, 0) ; Enables
 		_WinAPI_RedrawWindow($hWebView2_Window, 0, 0, BitOR($RDW_FRAME, $RDW_INVALIDATE, $RDW_ALLCHILDREN))  ; Repaints
 		GUICtrlDelete($idPic)
 		$idPic = 0
+		MsgBox($MB_TOPMOST, "STEP " & $iStep & " TEST #" & @ScriptLineNumber, 'After ENABLED')
+		$iStep = 1 ; reset
 		Return
 	EndIf
 	#EndRegion ; if $idPic is given then it means you already have it and want to delete it - unfreeze - show WebView2 content
 
 	#Region ; freeze $hWebView2_Window
 
+	MsgBox($MB_TOPMOST, "STEP " & $iStep & " TEST #" & @ScriptLineNumber, 'BEFORE Disabled')
+		$iStep += 1
 	#Region ; add PIC to parent window
 	Local $hMainGUI_Window = _WinAPI_GetWindow($hWebView2_Window, $GW_HWNDPREV)
 	Local $aPos = WinGetPos($hWebView2_Window)
+;~ 	_ArrayDisplay($aPos, '$aPos ' & @ScriptLineNumber)
 	Local $hPrev = GUISwitch($hMainGUI_Window)
 	$idPic = GUICtrlCreatePic('', 0, 0, $aPos[2], $aPos[3])
 	Local $hPic = GUICtrlGetHandle($idPic)
@@ -149,6 +166,8 @@ Func __NetWebView2_freezer($oWebV2M, ByRef $idPic)
 	EndIf
 
 	_SendMessage($hWebView2_Window, $WM_SETREDRAW, False, 0) ; Disables ; https://www.autoitscript.com/forum/topic/199172-disable-gui-updating-repainting/
+	MsgBox($MB_TOPMOST, "STEP " & $iStep & " TEST #" & @ScriptLineNumber, 'AFTER Disabled')
+		$iStep += 1
 	Return $idPic
 	#EndRegion ; freeze $hWebView2_Window
 EndFunc   ;==>__NetWebView2_freezer
