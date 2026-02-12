@@ -216,6 +216,10 @@ Sets or gets the path where the WebView2 browser stores crash reports (dump file
 - **Example (Custom Path)**: `object.FailureReportFolderPath = "C:\MyCustomCrashDumps"`
 - **Example (Read current)**: `$sPath = object.FailureReportFolderPath`
 
+##### Version
+ Allows AutoIt to verify the DLL version at runtime for compatibility checks.
+`object.version
+
 #### ===Method===
 
 ##### Initialize
@@ -619,6 +623,11 @@ Fired when the browser requires basic authentication credentials for a URI.
 ---
 
 ### JsonParser (ProgId: NetJson.Parser)
+
+#### ===Properties===
+##### Version
+ Allows AutoIt to verify the DLL version at runtime for compatibility checks.
+`object.version
 
 #### ===Methods===
 
