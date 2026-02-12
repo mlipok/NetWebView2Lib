@@ -10,7 +10,7 @@
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; ⚠️ to make this work, download pdfJS library from https://mozilla.github.io/pdf.js/
 ; for example:
-; https://github.com/mozilla/pdf.js/releases/download/v5.4.530/pdfjs-5.4.530-dist.zip
+; https://github.com/mozilla/pdf.js/releases/download/v5.4.624/pdfjs-5.4.624-dist.zip
 ; and unzip to:   @ScriptDir & "\JS_Lib\pdfjs\"
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -50,7 +50,7 @@ Func _Example()
 	#EndRegion ; GUI CREATION
 
 	; navigate to the page
-	__SetupStaticPDF($oWeb, @ScriptDir & "\invoice-plugin-sample.pdf", True, True)
+	__SetupStaticPDF($oWeb, @ScriptDir & "\invoice-plugin-sample.pdf", True, False)
 
 	_NetWebView2_ExecuteScript($oWeb, "extractPDFText();", $NETWEBVIEW2_EXECUTEJS_MODE0_FIREANDFORGET)
 
