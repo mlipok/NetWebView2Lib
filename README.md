@@ -78,6 +78,11 @@ The `OnAcceleratorKeyPressed` event now provides 1:1 access to the underlying Wi
 - **Standalone Argument Logic**: Argument wrappers have been moved to dedicated files (e.g., `WebView2AcceleratorKeyPressedEventArgs.cs`).
 - **Lean Core**: Reduced `WebViewManager.cs` complexity by outsourcing event data structures.
 
+#### **3. Process Stability & Authentication**
+- **Robust Crash Handling**: `OnProcessFailed` provides deep insights into process crashes, allowing for automated recovery or logging.
+- **Crash Dump Management**: `FailureReportFolderPath` allows redirection of diagnostic files.
+- **Native Authentication**: `OnBasicAuthenticationRequested` brings support for server-level auth prompts, including asynchronous credential entry via the `.Complete()` method.
+
 ---
 
 ## 🚀 What's New in v2.0.0-beta.2 - COM Versioning & Handle Alignment
@@ -98,12 +103,11 @@ You can now access the `.version` property on all primary COM objects.
 - **GUID Collision Resolution**: Fixed internal interface IDs that caused registration issues in v2.0.0-beta.1.
 - **`ParentWindowHandle`**: New property to retrieve the handle passed during initialization.
 
-
 <p align="center">
   <img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" width="100%">
 </p>
 
-## 📖 NetWebView2Lib Version 2.0.0-beta.3 (Quick Reference)
+## 📖 NetWebView2Lib Version 2.0.0-beta.3 (2026-02-11) (Quick Reference)
 
 ### NetWebView2Lib (ProgId: NetWebView2.Manager)
 
@@ -204,6 +208,13 @@ Returns the parent window handle provided during initialization. [Format: `[HAND
 ##### BlockedVirtualKeys
 A comma-separated list of Virtual Key codes to be blocked synchronously (e.g., "116,123").
 `object.BlockedVirtualKeys = "116,123"`
+
+##### FailureReportFolderPath
+Sets or gets the path where the WebView2 browser stores crash reports (dump files).
+- **Default**: If NOT set by the user, the system automatically uses the `Crashes` subfolder within the `UserDataFolder` (assigned during `.Initialize`).
+- **Manual Override**: You can set a custom path **before** calling `.Initialize`.
+- **Example (Custom Path)**: `object.FailureReportFolderPath = "C:\MyCustomCrashDumps"`
+- **Example (Read current)**: `$sPath = object.FailureReportFolderPath`
 
 #### ===Method===
 
@@ -365,7 +376,6 @@ Enables or disables the Web Message communication system.
 Enables or disables the browser status bar.
 `object.SetStatusBarEnabled(Enabled As Boolean)`
 
-  
 ##### CapturePreview
 Captures a screenshot of the current view to a file.
 `object.CapturePreview(FilePath As String, Format As String)`
@@ -583,6 +593,27 @@ Fired when an accelerator key is pressed. Allows blocking browser shortcuts.
 		WasKeyDown (bool): True if the key was already down.
 		IsKeyReleased (bool): True if the event is a key up.
 		KeyEventLParam  (int):  Gets the LPARAM value that accompanied the window message*
+
+##### OnProcessFailed
+Fired when a renderer or other browser process fails/crashes.
+`object_OnProcessFailed(Sender As Object, ParentHandle As HWND, Args As Object)`
+    *Args properties:
+        ProcessFailedKind (int): The kind of process failure.
+        Reason (int): The reason for the failure.
+        ExitCode (int): The exit code of the failed process.
+        ProcessDescription (string): A description of the process.*
+
+##### OnBasicAuthenticationRequested
+Fired when the browser requires basic authentication credentials for a URI.
+`object_OnBasicAuthenticationRequested(Sender As Object, ParentHandle As HWND, Args As Object)`
+    *Args properties:
+        Uri (string): The URI requesting authentication.
+        Challenge (string): The authentication challenge string.
+        Cancel (bool): Set to True to cancel the request.
+        UserName (string): The username to provide.
+        Password (string): The password to provide.
+    *Args methods:
+        Complete(): Notifies the browser that credentials have been set (supports asynchronous data gathering).*
 
 
 ---
