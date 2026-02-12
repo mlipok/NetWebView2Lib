@@ -1354,6 +1354,14 @@ Volatile Func __NetWebView2_Events__OnMessageReceived($oWebV2M, $hGUI, $sMsg)
 			__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & ' COMMAND:' & $sCommand, 1)
 			__NetWebView2_LastMessageReceived($oWebV2M, $NETWEBVIEW2_MESSAGE__DOWNLOAD_STARTING)
 
+		Case "BROWSER_GOT_FOCUS"
+			__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & ' COMMAND:' & $sCommand, 1)
+			__NetWebView2_LastMessageReceived($oWebV2M, $NETWEBVIEW2_MESSAGE__BROWSER_GOT_FOCUS)
+
+		Case "BROWSER_LOST_FOCUS"
+			__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & ' COMMAND:' & $sCommand, 1)
+			__NetWebView2_LastMessageReceived($oWebV2M, $NETWEBVIEW2_MESSAGE__BROWSER_LOST_FOCUS)
+
 		Case "ERROR"
 			__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & ' ! CRITICAL ERROR:' & $sData, 1)
 			__NetWebView2_LastMessageReceived($oWebV2M, $NETWEBVIEW2_MESSAGE__CRITICAL_ERROR)
@@ -1797,7 +1805,7 @@ EndFunc   ;==>__NetWebView2_Events__OnProcessFailed
 
 ; #INTERNAL_USE_ONLY# ===========================================================================================================
 ; Name ..........: __NetWebView2_Events__OnBasicAuthenticationRequested
-; Description ...:  event is raised when WebView encounters a Basic HTTP Authentication request as described in https://developer.mozilla.org/docs/Web/HTTP/Authentication, a Digest HTTP Authentication request as described in https://developer.mozilla.org/docs/Web/HTTP/Headers/Authorization#digest, an NTLM authentication or a Proxy Authentication request.
+; Description ...: event is raised when WebView encounters a Basic HTTP Authentication request as described in https://developer.mozilla.org/docs/Web/HTTP/Authentication, a Digest HTTP Authentication request as described in https://developer.mozilla.org/docs/Web/HTTP/Headers/Authorization#digest, an NTLM authentication or a Proxy Authentication request.
 ; Syntax ........: __NetWebView2_Events__OnBasicAuthenticationRequested($oWebV2M, $hGUI, $oArgs)
 ; Parameters ....: $oWebV2M             - an object.
 ;                  $hGUI                - a handle value.
