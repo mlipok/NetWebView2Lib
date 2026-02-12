@@ -60,7 +60,7 @@ Func _Example()
 ;~ 	MsgBox($MB_TOPMOST, "TEST #" & @ScriptLineNumber, 0)
 	Local $s_PDF_FileFullPath
 
-	Local $s_PDF_Directory = FileSelectFolder('Choose folder with PDF', '')
+	Local $s_PDF_Directory = FileSelectFolder('Choose folder with PDF', @ScriptDir)
 
 	WinSetOnTop($hMainGUIWindow, "", $WINDOWS_ONTOP)
 
@@ -96,7 +96,12 @@ EndFunc   ;==>_Example
 
 Func __NetWebView2_freezer($oWebV2M, ByRef $idPic)
 	#TODO  https://github.com/ioa747/NetWebView2Lib/issues/52#issuecomment-3864784975
-	Local $hWebView2_Window = HWnd("0x" & Hex($oWebV2M.BrowserWindowHandle, 16))
+	Local $hWebView2_Window = $oWebV2M.BrowserWindowHandle
+;~ 	Local $hWebView2_Window = HWnd("0x" & Hex($oWebV2M.BrowserWindowHandle, 16))
+;~ 	Local $hWebView2_Window = HWnd("0x" & Hex($oWebV2M.BrowserWindowHandle, 16))
+;~ 	Local $hWebView2_Window = HWnd(Hex($oWebV2M.BrowserWindowHandle, 16))
+;~ 	Local $hWebView2_Window = HWnd(Hex($oWebV2M.BrowserWindowHandle))
+;~ 	Local $hWebView2_Window = HWnd($oWebV2M.BrowserWindowHandle)
 	#Region ; if $idPic is given then it means you already have it and want to delete it - unfreeze - show WebView2 content
 	If $idPic Then
 		_SendMessage($hWebView2_Window, $WM_SETREDRAW, True, 0) ; Enables
