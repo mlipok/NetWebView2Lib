@@ -11,8 +11,9 @@
 #include <Misc.au3>
 #include <GuiMenu.au3>
 #include <WinAPIMisc.au3>
-#include "_WV2_ExtensionPicker.au3"
+
 #include "..\NetWebView2Lib.au3"
+#include "_WV2_ExtensionPicker.au3"
 
 ; Check if the version supports Maps
 If _VersionCompare(@AutoItVersion, "3.3.16.0") < 0 Then
@@ -47,14 +48,13 @@ Func _Example()
 	If @error Then Return SetError(@error, @extended, $oWebV2M)
 
 	; initialize browser - put it on the GUI
-	_NetWebView2_Initialize($oWebV2M, $hGUI, $sProfileDirectory, 0, 25, 1000, 800 - 25, True, True, True, 1.2, "0x2B2B2B")
+	_NetWebView2_Initialize($oWebV2M, $hGUI, $sProfileDirectory, 0, 25, 1000, 800 - 25, True, True, 1.2, "0x2B2B2B")
 
 	; Make a Basic ToolBar for Browsing navigation
 	$_mBAR = _Web_MakeBar($hGUI, $oWebV2M, 1)
 
 	; show the GUI after browser was fully initialized
 	GUISetState(@SW_SHOW)
-
 
 	; navigate to the page
 	_NetWebView2_Navigate($oWebV2M, "https://en.wikipedia.org/wiki/List_of_countries_and_dependencies_by_population", $NETWEBVIEW2_MESSAGE__TITLE_CHANGED)
@@ -67,8 +67,10 @@ Func _Example()
 		Switch $iMsg
 			Case $GUI_EVENT_CLOSE
 				ExitLoop
+
 			Case $_mBAR.Navigation
 				_Web_NavButton()
+
 			Case $_mBAR.Address
 				If _IsPressed("0D", $hDLL) Then ; ENTER key
 					_Web_NavButton("Navigate")
@@ -79,12 +81,15 @@ Func _Example()
 
 			Case $_mBAR.GoBack
 				$oWebV2M.GoBack()
+
 			Case $_mBAR.GoForward
 				$oWebV2M.GoForward()
+
 			Case $_mBAR.Application_Menu
 				_ShowApplicationMenu($oWebV2M, $hGUI)
 			Case $_mBAR.Features
 ;~ 				_ShowFeaturesMenu()
+
 		EndSwitch
 
 		; AddressBar FullSelection Management
