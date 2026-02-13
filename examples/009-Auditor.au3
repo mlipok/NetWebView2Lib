@@ -10,227 +10,234 @@
 #include "..\NetWebView2Lib.au3"
 
 ; Global objects
-Global $oWebV2M, $oJSBridge
-Global $oMyError = ObjEvent("AutoIt.Error", _ErrFunc) ; COM Error Handler
+Global $oMyError = ObjEvent("AutoIt.Error", __ErrFunc) ; COM Error Handler
 Global $g_bHighlight = 0
-Global $g_bHideAllPopups = 0
+Global $g_b_HideAllPopups = 0
 Global $g_bAdBlock = 0
 Global $g_bDarkMode = 0
-Global $sProfileDirectory = @ScriptDir & "\NetWebView2Lib-UserDataFolder"
+Global $idStatusLabel, $idAuditBtn, $idURL, $idReportEdit
 
-#Region ; === GUI ===
-Local $hGUI = GUICreate("AutoIt Auditor", 1100, 850, -1, -1, BitOR($WS_OVERLAPPEDWINDOW, $WS_CLIPCHILDREN))
-GUISetBkColor(0x1E1E1E, $hGUI)
-
-; URL ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-;~ Local $sURL = "https://learn.microsoft.com/en-us/windows/win32/api/uiautomationclient/"
-Local $sURL = "https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2?view=webview2-dotnet-1.0.3595.46"
-Local $idURL = GUICtrlCreateInput($sURL, 420, 10, 670, 25)
-GUICtrlSetFont(-1, 10)
-GUICtrlSetColor(-1, 0xFFFFFF) ; White
-GUICtrlSetBkColor(-1, 0x000000) ; Black background
-GUICtrlSetResizing(-1, $GUI_DOCKLEFT + $GUI_DOCKRIGHT + $GUI_DOCKMENUBAR)
-
-; Button ClearBrowserData
-Local $idBtnClearBrowserData = GUICtrlCreateButton(ChrW(59608), 150, 10, 20, 25)
-GUICtrlSetFont(-1, 10, 400, 0, "Segoe Fluent Icons")
-GUICtrlSetResizing(-1, $GUI_DOCKALL)
-GUICtrlSetTip(-1, "ClearBrowserData")
-
-; Button ResetZoom
-Local $idBtnResetZoom = GUICtrlCreateButton(ChrW(59623), 170, 10, 20, 25)
-GUICtrlSetFont(-1, 10, 400, 0, "Segoe Fluent Icons")
-GUICtrlSetResizing(-1, $GUI_DOCKALL)
-GUICtrlSetTip(-1, "ResetZoom")
-
-; Button SetZoom
-Local $idBtnSetZoom = GUICtrlCreateButton(ChrW(59624), 190, 10, 20, 25)
-GUICtrlSetFont(-1, 10, 400, 0, "Segoe Fluent Icons")
-GUICtrlSetResizing(-1, $GUI_DOCKALL)
-GUICtrlSetTip(-1, "SetZoom")
-
-; Button HideAllPopups
-Local $idBtnHideAllPopups = GUICtrlCreateButton(ChrW(59212), 210, 10, 20, 25)
-GUICtrlSetFont(-1, 10, 400, 0, "Segoe Fluent Icons")
-GUICtrlSetResizing(-1, $GUI_DOCKALL)
-GUICtrlSetTip(-1, "HideAllPopups")
-
-; Button AdBlock
-Local $idBtnAdBlock = GUICtrlCreateButton(ChrW(59184), 230, 10, 20, 25)
-GUICtrlSetFont(-1, 10, 400, 0, "Segoe Fluent Icons")
-GUICtrlSetResizing(-1, $GUI_DOCKALL)
-GUICtrlSetTip(-1, "AdBlock")
-
-; Button DarkMode
-Local $idBtnDarkMode = GUICtrlCreateButton(ChrW(59297), 270, 10, 20, 25)
-GUICtrlSetFont(-1, 10, 400, 0, "Segoe Fluent Icons")
-GUICtrlSetResizing(-1, $GUI_DOCKALL)
-GUICtrlSetTip(-1, "DarkMode")
-
-; Button Highlight
-Local $idBtnHighlight = GUICtrlCreateButton(ChrW(59366), 290, 10, 20, 25)
-GUICtrlSetFont(-1, 10, 400, 0, "Segoe Fluent Icons")
-GUICtrlSetResizing(-1, $GUI_DOCKALL)
-GUICtrlSetTip(-1, "Highlight")
-
-; Button GoBack
-Local $idBtnGoBack = GUICtrlCreateButton(ChrW(59179), 320, 10, 20, 25)
-GUICtrlSetFont(-1, 10, 400, 0, "Segoe Fluent Icons")
-GUICtrlSetResizing(-1, $GUI_DOCKALL)
-
-; Button Stop
-Local $idBtnStop = GUICtrlCreateButton(ChrW(59153), 340, 10, 20, 25)
-GUICtrlSetFont(-1, 10, 400, 0, "Segoe Fluent Icons")
-GUICtrlSetResizing(-1, $GUI_DOCKALL)
-
-; Button GoForward
-Local $idBtnGoForward = GUICtrlCreateButton(ChrW(59178), 360, 10, 20, 25)
-GUICtrlSetFont(-1, 10, 400, 0, "Segoe Fluent Icons")
-GUICtrlSetResizing(-1, $GUI_DOCKALL)
-
-; Button Reload
-Local $idReload = GUICtrlCreateButton(ChrW(59180), 380, 10, 30, 25)
-GUICtrlSetFont(-1, 10, 400, 0, "Segoe Fluent Icons")
-GUICtrlSetResizing(-1, $GUI_DOCKALL)
-
-; Report Consolas ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Local $idReportEdit = GUICtrlCreateEdit("", 10, 45, 400, 300, $ES_READONLY + $WS_VSCROLL)
-GUICtrlSetFont(-1, 10, 400, 0, "Consolas")
-GUICtrlSetBkColor(-1, 0x121212)
-GUICtrlSetColor(-1, 0x00FF00)
-GUICtrlSetResizing(-1, $GUI_DOCKALL)
-
-; Button SAVE AS PDF
-Local $idBtnPdf = GUICtrlCreateButton("SAVE AS PDF", 200, 350, 80, 25)
-GUICtrlSetResizing(-1, $GUI_DOCKALL)
-
-; Button RUN SITE HEALTH CHECK
-Local $idAuditBtn = GUICtrlCreateButton("CHECK SITE HEALTH", 10, 350, 190, 25)
-GUICtrlSetFont(-1, 10, 800)
-GUICtrlSetResizing(-1, $GUI_DOCKALL)
-
-; Separator Label
-GUICtrlCreateLabel("", 10, 385, 400, 3, $SS_GRAYFRAME)
-GUICtrlSetResizing(-1, $GUI_DOCKALL)
-
-; JS Consolas ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Local $idJSEdit = GUICtrlCreateEdit(JS_Example(), 10, 400, 400, 370)
-GUICtrlSetFont(-1, 10, 400, 0, "Consolas")
-GUICtrlSetBkColor(-1, 0x121212)
-GUICtrlSetColor(-1, 0x00FF00)
-GUICtrlSetResizing(-1, $GUI_DOCKALL)
-
-; Button Execute JS
-Local $idBtnExecJS = GUICtrlCreateButton("Execute JS", 10, 780, 80, 25)
-GUICtrlSetResizing(-1, $GUI_DOCKALL)
-
-; Status Label ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Local $idStatusLabel = GUICtrlCreateLabel("", 10, 820, 400, 20)
-GUICtrlSetFont(-1, 10, 800)
-;~ GUICtrlSetBkColor(-1, 0x808080)
-GUICtrlSetColor(-1, 0xFFFFFF)
-GUICtrlSetResizing(-1, $GUI_DOCKSIZE + $GUI_DOCKBOTTOM)
-
-; WebView2 Setup ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-; Initialize WebView2 Manager and register events
-$oWebV2M = _NetWebView2_CreateManager("", "WebView_", "")
-If @error Then Exit ConsoleWrite("@@(" & @ScriptLineNumber & ") :: @error:" & @error & ", @extended:" & @extended & @CRLF)
-
-; create JavaScript Bridge object
-$oJSBridge = _NetWebView2_GetBridge($oWebV2M, "Bridge_")
-If @error Then Exit ConsoleWrite("@@(" & @ScriptLineNumber & ") :: @error:" & @error & ", @extended:" & @extended & @CRLF)
-
-; initialize browser - put it on the GUI
-_NetWebView2_Initialize($oWebV2M, $hGUI, $sProfileDirectory, 420, 45, 670, 795, True, True, True, 1.2, "0x1E1E1E")
-
-_NetWebView2_Navigate($oWebV2M, $sURL, $NETWEBVIEW2_MESSAGE__NAV_STARTING)
-
-GUISetState(@SW_SHOW)
-
-#EndRegion ; === GUI ===
-
-Local $idMsg = 0
-While 1
-	$idMsg = GUIGetMsg()
-	Switch $idMsg
-		Case $GUI_EVENT_CLOSE
-			ExitLoop
-
-		Case $idBtnDarkMode
-			$g_bDarkMode = Not $g_bDarkMode ; Status reversal (True/False)
-			ShowWebNotification("DarkMode " & $g_bDarkMode, ($g_bDarkMode ? "#FF6A00" : "#2196F3"))
-			GUICtrlSetFont($idBtnDarkMode, 10, ($g_bDarkMode ? 700 : 400), 0, "Segoe Fluent Icons")
-			Local $choose = $g_bDarkMode ? ActivateDarkMode() : $oWebV2M.ClearInjectedCss()
-
-
-		Case $idBtnAdBlock
-			$g_bAdBlock = Not $g_bAdBlock ; Status reversal (True/False)
-			ShowWebNotification("AdBlock " & $g_bAdBlock, ($g_bAdBlock ? "#FF6A00" : "#2196F3"))
-			GUICtrlSetFont($idBtnAdBlock, 10, ($g_bAdBlock ? 700 : 400), 0, "Segoe Fluent Icons")
-			SetAdBlock($g_bAdBlock)
-			$oWebV2M.Reload()
-
-		Case $idBtnHideAllPopups
-			$g_bHideAllPopups = Not $g_bHideAllPopups ; Status reversal (True/False)
-			ShowWebNotification("HideAllPopups " & $g_bHideAllPopups, ($g_bHideAllPopups ? "#FF6A00" : "#2196F3"))
-			GUICtrlSetFont($idBtnHideAllPopups, 10, ($g_bHideAllPopups ? 700 : 400), 0, "Segoe Fluent Icons")
-
-		Case $idBtnHighlight
-			$g_bHighlight = Not $g_bHighlight ; Status reversal (True/False)
-			$oWebV2M.ToggleAuditHighlights($g_bHighlight)
-			ShowWebNotification("Highlights " & $g_bHighlight, ($g_bHighlight ? "#FF6A00" : "#2196F3"))
-			GUICtrlSetFont($idBtnHighlight, 10, ($g_bHighlight ? 700 : 400), 0, "Segoe Fluent Icons")
-
-		Case $idBtnSetZoom
-			$oWebV2M.SetZoom(1.5) ; Zoom to 150%
-			ShowWebNotification("Zoom: 150%", "#2196F3")
-
-		Case $idBtnResetZoom
-			$oWebV2M.ResetZoom() ; Reset to 100%
-			ShowWebNotification("Zoom: 100%", "#4CAF50")
-
-		Case $idBtnGoBack
-			$oWebV2M.GoBack()
-
-		Case $idBtnGoForward
-			$oWebV2M.GoForward()
-
-		Case $idBtnStop
-			$oWebV2M.Stop()
-
-		Case $idBtnClearBrowserData
-			If MsgBox(36, "Confirm", "Do you want to clear your browsing data?") = 6 Then
-				$oWebV2M.ClearBrowserData()
-				ShowWebNotification("Browser history & cookies cleared!", "#f44336")
-			EndIf
-
-		Case $idAuditBtn
-			RunHealthCheck()
-
-		Case $idReload
-			$oWebV2M.Reload()
-
-		Case $idURL
-			$oWebV2M.Navigate(GUICtrlRead($idURL))
-			ConsoleWrite("GUICtrlRead($idURL)=" & GUICtrlRead($idURL) & @CRLF)
-
-		Case $idBtnPdf
-			CreateAndSavePDF()
-
-		Case $idBtnExecJS
-			_NetWebView2_ExecuteScript($oWebV2M, GUICtrlRead($idJSEdit), $NETWEBVIEW2_EXECUTEJS_MODE0_FIREANDFORGET)
-
-		Case Else
-			If $idMsg > 0 Then ConsoleWrite("> Else Msg=" & $idMsg & @CRLF)
-
-	EndSwitch
-WEnd
-
-_NetWebView2_CleanUp($oWebV2M, $oJSBridge)
+_Example()
 Exit
 
-Func RunHealthCheck()
+Func _Example()
+	#Region ; === GUI ===
+	Local $hGUI = GUICreate("AutoIt Auditor", 1100, 850, -1, -1, BitOR($WS_OVERLAPPEDWINDOW, $WS_CLIPCHILDREN))
+	GUISetBkColor(0x1E1E1E, $hGUI)
+
+	; URL ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+;~ Local $sURL = "https://learn.microsoft.com/en-us/windows/win32/api/uiautomationclient/"
+	Local $sURL = "https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2?view=webview2-dotnet-1.0.3595.46"
+	$idURL = GUICtrlCreateInput($sURL, 420, 10, 670, 25)
+	GUICtrlSetFont(-1, 10)
+	GUICtrlSetColor(-1, 0xFFFFFF) ; White
+	GUICtrlSetBkColor(-1, 0x000000) ; Black background
+	GUICtrlSetResizing(-1, $GUI_DOCKLEFT + $GUI_DOCKRIGHT + $GUI_DOCKMENUBAR)
+
+	; Button ClearBrowserData
+	Local $idBtnClearBrowserData = GUICtrlCreateButton(ChrW(59608), 150, 10, 20, 25)
+	GUICtrlSetFont(-1, 10, 400, 0, "Segoe Fluent Icons")
+	GUICtrlSetResizing(-1, $GUI_DOCKALL)
+	GUICtrlSetTip(-1, "ClearBrowserData")
+
+	; Button ResetZoom
+	Local $idBtnResetZoom = GUICtrlCreateButton(ChrW(59623), 170, 10, 20, 25)
+	GUICtrlSetFont(-1, 10, 400, 0, "Segoe Fluent Icons")
+	GUICtrlSetResizing(-1, $GUI_DOCKALL)
+	GUICtrlSetTip(-1, "ResetZoom")
+
+	; Button SetZoom
+	Local $idBtnSetZoom = GUICtrlCreateButton(ChrW(59624), 190, 10, 20, 25)
+	GUICtrlSetFont(-1, 10, 400, 0, "Segoe Fluent Icons")
+	GUICtrlSetResizing(-1, $GUI_DOCKALL)
+	GUICtrlSetTip(-1, "SetZoom")
+
+	; Button _HideAllPopups
+	Local $idBtn_HideAllPopups = GUICtrlCreateButton(ChrW(59212), 210, 10, 20, 25)
+	GUICtrlSetFont(-1, 10, 400, 0, "Segoe Fluent Icons")
+	GUICtrlSetResizing(-1, $GUI_DOCKALL)
+	GUICtrlSetTip(-1, "_HideAllPopups")
+
+	; Button AdBlock
+	Local $idBtnAdBlock = GUICtrlCreateButton(ChrW(59184), 230, 10, 20, 25)
+	GUICtrlSetFont(-1, 10, 400, 0, "Segoe Fluent Icons")
+	GUICtrlSetResizing(-1, $GUI_DOCKALL)
+	GUICtrlSetTip(-1, "AdBlock")
+
+	; Button DarkMode
+	Local $idBtnDarkMode = GUICtrlCreateButton(ChrW(59297), 270, 10, 20, 25)
+	GUICtrlSetFont(-1, 10, 400, 0, "Segoe Fluent Icons")
+	GUICtrlSetResizing(-1, $GUI_DOCKALL)
+	GUICtrlSetTip(-1, "DarkMode")
+
+	; Button Highlight
+	Local $idBtnHighlight = GUICtrlCreateButton(ChrW(59366), 290, 10, 20, 25)
+	GUICtrlSetFont(-1, 10, 400, 0, "Segoe Fluent Icons")
+	GUICtrlSetResizing(-1, $GUI_DOCKALL)
+	GUICtrlSetTip(-1, "Highlight")
+
+	; Button GoBack
+	Local $idBtnGoBack = GUICtrlCreateButton(ChrW(59179), 320, 10, 20, 25)
+	GUICtrlSetFont(-1, 10, 400, 0, "Segoe Fluent Icons")
+	GUICtrlSetResizing(-1, $GUI_DOCKALL)
+
+	; Button Stop
+	Local $idBtnStop = GUICtrlCreateButton(ChrW(59153), 340, 10, 20, 25)
+	GUICtrlSetFont(-1, 10, 400, 0, "Segoe Fluent Icons")
+	GUICtrlSetResizing(-1, $GUI_DOCKALL)
+
+	; Button GoForward
+	Local $idBtnGoForward = GUICtrlCreateButton(ChrW(59178), 360, 10, 20, 25)
+	GUICtrlSetFont(-1, 10, 400, 0, "Segoe Fluent Icons")
+	GUICtrlSetResizing(-1, $GUI_DOCKALL)
+
+	; Button Reload
+	Local $idReload = GUICtrlCreateButton(ChrW(59180), 380, 10, 30, 25)
+	GUICtrlSetFont(-1, 10, 400, 0, "Segoe Fluent Icons")
+	GUICtrlSetResizing(-1, $GUI_DOCKALL)
+
+	; Report Consolas ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	$idReportEdit = GUICtrlCreateEdit("", 10, 45, 400, 300, $ES_READONLY + $WS_VSCROLL)
+	#forceref $idReportEdit
+	GUICtrlSetFont(-1, 10, 400, 0, "Consolas")
+	GUICtrlSetBkColor(-1, 0x121212)
+	GUICtrlSetColor(-1, 0x00FF00)
+	GUICtrlSetResizing(-1, $GUI_DOCKALL)
+
+	; Button SAVE AS PDF
+	Local $idBtnPdf = GUICtrlCreateButton("SAVE AS PDF", 200, 350, 80, 25)
+	GUICtrlSetResizing(-1, $GUI_DOCKALL)
+
+	; Button RUN SITE HEALTH CHECK
+	$idAuditBtn = GUICtrlCreateButton("CHECK SITE HEALTH", 10, 350, 190, 25)
+	GUICtrlSetFont(-1, 10, 800)
+	GUICtrlSetResizing(-1, $GUI_DOCKALL)
+
+	; Separator Label
+	GUICtrlCreateLabel("", 10, 385, 400, 3, $SS_GRAYFRAME)
+	GUICtrlSetResizing(-1, $GUI_DOCKALL)
+
+	; JS Consolas ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	Local $idJSEdit = GUICtrlCreateEdit(__JS_Example(), 10, 400, 400, 370)
+	GUICtrlSetFont(-1, 10, 400, 0, "Consolas")
+	GUICtrlSetBkColor(-1, 0x121212)
+	GUICtrlSetColor(-1, 0x00FF00)
+	GUICtrlSetResizing(-1, $GUI_DOCKALL)
+
+	; Button Execute JS
+	Local $idBtnExecJS = GUICtrlCreateButton("Execute JS", 10, 780, 80, 25)
+	GUICtrlSetResizing(-1, $GUI_DOCKALL)
+
+	; Status Label ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	$idStatusLabel = GUICtrlCreateLabel("", 10, 820, 400, 20)
+	GUICtrlSetFont(-1, 10, 800)
+;~ GUICtrlSetBkColor(-1, 0x808080)
+	GUICtrlSetColor(-1, 0xFFFFFF)
+	GUICtrlSetResizing(-1, $GUI_DOCKSIZE + $GUI_DOCKBOTTOM)
+
+	; WebView2 Setup ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+	; Initialize WebView2 Manager and register events
+	Local $oWebV2M = _NetWebView2_CreateManager("", "WebView_", "")
+	If @error Then Exit ConsoleWrite("@@(" & @ScriptLineNumber & ") :: @error:" & @error & ", @extended:" & @extended & @CRLF)
+
+	; create JavaScript Bridge object
+	Local $oJSBridge = _NetWebView2_GetBridge($oWebV2M, "Bridge_")
+	If @error Then Exit ConsoleWrite("@@(" & @ScriptLineNumber & ") :: @error:" & @error & ", @extended:" & @extended & @CRLF)
+
+	; initialize browser - put it on the GUI
+	Local $sProfileDirectory = @ScriptDir & "\NetWebView2Lib-UserDataFolder"
+	_NetWebView2_Initialize($oWebV2M, $hGUI, $sProfileDirectory, 420, 45, 670, 795, True, True, 1.2, "0x1E1E1E")
+
+	_NetWebView2_Navigate($oWebV2M, $sURL, $NETWEBVIEW2_MESSAGE__NAV_STARTING)
+
+	GUISetState(@SW_SHOW)
+
+	#EndRegion ; === GUI ===
+
+	Local $idMsg = 0
+	While 1
+		$idMsg = GUIGetMsg()
+		Switch $idMsg
+			Case $GUI_EVENT_CLOSE
+				ExitLoop
+
+			Case $idBtnDarkMode
+				$g_bDarkMode = Not $g_bDarkMode ; Status reversal (True/False)
+				_ShowWebNotification($oWebV2M, "DarkMode " & $g_bDarkMode, ($g_bDarkMode ? "#FF6A00" : "#2196F3"))
+				GUICtrlSetFont($idBtnDarkMode, 10, ($g_bDarkMode ? 700 : 400), 0, "Segoe Fluent Icons")
+				Local $choose = $g_bDarkMode ? _ActivateDarkMode($oWebV2M) : $oWebV2M.ClearInjectedCss()
+				#forceref $choose
+
+
+			Case $idBtnAdBlock
+				$g_bAdBlock = Not $g_bAdBlock ; Status reversal (True/False)
+				_ShowWebNotification($oWebV2M, "AdBlock " & $g_bAdBlock, ($g_bAdBlock ? "#FF6A00" : "#2196F3"))
+				GUICtrlSetFont($idBtnAdBlock, 10, ($g_bAdBlock ? 700 : 400), 0, "Segoe Fluent Icons")
+				_SetAdBlock($oWebV2M, $g_bAdBlock)
+				$oWebV2M.Reload()
+
+			Case $idBtn_HideAllPopups
+				$g_b_HideAllPopups = Not $g_b_HideAllPopups ; Status reversal (True/False)
+				_ShowWebNotification($oWebV2M, "_HideAllPopups " & $g_b_HideAllPopups, ($g_b_HideAllPopups ? "#FF6A00" : "#2196F3"))
+				GUICtrlSetFont($idBtn_HideAllPopups, 10, ($g_b_HideAllPopups ? 700 : 400), 0, "Segoe Fluent Icons")
+
+			Case $idBtnHighlight
+				$g_bHighlight = Not $g_bHighlight ; Status reversal (True/False)
+				$oWebV2M.ToggleAuditHighlights($g_bHighlight)
+				_ShowWebNotification($oWebV2M, "Highlights " & $g_bHighlight, ($g_bHighlight ? "#FF6A00" : "#2196F3"))
+				GUICtrlSetFont($idBtnHighlight, 10, ($g_bHighlight ? 700 : 400), 0, "Segoe Fluent Icons")
+
+			Case $idBtnSetZoom
+				$oWebV2M.SetZoom(1.5) ; Zoom to 150%
+				_ShowWebNotification($oWebV2M, "Zoom: 150%", "#2196F3")
+
+			Case $idBtnResetZoom
+				$oWebV2M.ResetZoom() ; Reset to 100%
+				_ShowWebNotification($oWebV2M, "Zoom: 100%", "#4CAF50")
+
+			Case $idBtnGoBack
+				$oWebV2M.GoBack()
+
+			Case $idBtnGoForward
+				$oWebV2M.GoForward()
+
+			Case $idBtnStop
+				$oWebV2M.Stop()
+
+			Case $idBtnClearBrowserData
+				If MsgBox(36, "Confirm", "Do you want to clear your browsing data?") = 6 Then
+					$oWebV2M.ClearBrowserData()
+					_ShowWebNotification($oWebV2M, "Browser history & cookies cleared!", "#f44336")
+				EndIf
+
+			Case $idAuditBtn
+				_RunHealthCheck($oWebV2M)
+
+			Case $idReload
+				$oWebV2M.Reload()
+
+			Case $idURL
+				$oWebV2M.Navigate(GUICtrlRead($idURL))
+				ConsoleWrite("GUICtrlRead($idURL)=" & GUICtrlRead($idURL) & @CRLF)
+
+			Case $idBtnPdf
+				_CreateAndSavePDF($oWebV2M)
+
+			Case $idBtnExecJS
+				_NetWebView2_ExecuteScript($oWebV2M, GUICtrlRead($idJSEdit), $NETWEBVIEW2_EXECUTEJS_MODE0_FIREANDFORGET)
+
+			Case Else
+				If $idMsg > 0 Then ConsoleWrite("> Else Msg=" & $idMsg & @CRLF)
+
+		EndSwitch
+	WEnd
+
+	_NetWebView2_CleanUp($oWebV2M, $oJSBridge)
+
+EndFunc   ;==>_Example
+
+Func _RunHealthCheck($oWebV2M)
 	; Build the JS as a proper JSON object string
 	Local $sJS = _
 			"var audit = {" & _
@@ -244,12 +251,12 @@ Func RunHealthCheck()
 			"window.chrome.webview.postMessage(JSON.stringify(audit));" ; Send as JSON string
 
 	If IsObj($oWebV2M) Then _NetWebView2_ExecuteScript($oWebV2M, $sJS, $NETWEBVIEW2_EXECUTEJS_MODE0_FIREANDFORGET)
-EndFunc   ;==>RunHealthCheck
+EndFunc   ;==>_RunHealthCheck
 
 ; ==============================================================================
 ; EVENT HANDLER: WebView Manager (Core System Events from C#)
 ; ==============================================================================
-Func WebView_OnMessageReceived($oWebV2M, $hGUI, $sMessage)
+Func _WebView_OnMessageReceived($oWebV2M, $hGUI, $sMessage)
 	; Uncomment for debugging core events
 	ConsoleWrite("+> [SYSTEM]: " & $sMessage & @CRLF)
 
@@ -273,9 +280,9 @@ Func WebView_OnMessageReceived($oWebV2M, $hGUI, $sMessage)
 			GUICtrlSetData($idStatusLabel, "Ready" & ($g_bAdBlock ? " | 🛡️ Ads Blocked: " & $iAdCount : ""))
 
 			; Auto-apply active features on new page load
-			If $g_bDarkMode Then ActivateDarkMode()
+			If $g_bDarkMode Then _ActivateDarkMode($oWebV2M)
 			If $g_bHighlight Then $oWebV2M.ToggleAuditHighlights(True)
-			If $g_bHideAllPopups Then HideAllPopups()
+			If $g_b_HideAllPopups Then _HideAllPopups($oWebV2M)
 
 		Case "TITLE_CHANGED"
 			If $aSplit[0] > 1 Then
@@ -313,12 +320,12 @@ Func WebView_OnMessageReceived($oWebV2M, $hGUI, $sMessage)
 			ConsoleWrite("! System Error: " & $sMessage & @CRLF)
 
 	EndSwitch
-EndFunc   ;==>WebView_OnMessageReceived
+EndFunc   ;==>_WebView_OnMessageReceived
 
 ; ==============================================================================
 ; EVENT HANDLER: Bridge (JavaScript Messages via postMessage)
 ; ==============================================================================
-Func Bridge_OnMessageReceived($oWebV2M, $hGUI, $sMessage)
+Func _Bridge_OnMessageReceived($oWebV2M, $hGUI, $sMessage)
 	#forceref $oWebV2M, $hGUI
 	ConsoleWrite("+> [BRIDGE]: " & $sMessage & @CRLF)
 
@@ -367,7 +374,7 @@ Func Bridge_OnMessageReceived($oWebV2M, $hGUI, $sMessage)
 				MsgBox(16, "JS Error", "Message: " & $sMessage)
 		EndSwitch
 	EndIf
-EndFunc   ;==>Bridge_OnMessageReceived
+EndFunc   ;==>_Bridge_OnMessageReceived
 
 Func _HandleHealthReportJSON($oJson)
 	Local $sReport = "=== SITE HEALTH REPORT (JSON) ===" & @CRLF & @CRLF
@@ -404,7 +411,7 @@ Func _HandleCSVExport($sData)
 	ShellExecute($sCSVPath)
 EndFunc   ;==>_HandleCSVExport
 
-Func CreateAndSavePDF()
+Func _CreateAndSavePDF($oWebV2M)
 	Local $sAuditResults = GUICtrlRead($idReportEdit)
 
 	If $sAuditResults = "" Then
@@ -423,21 +430,16 @@ Func CreateAndSavePDF()
 			"</body></html>"
 
 	; Show it in Browser
-;~ 	$oWebV2M.NavigateToString($sHTML)
-	_NetWebView2_NavigateToString00($oWebV2M, $sHTML, $NETWEBVIEW2_MESSAGE__TITLE_CHANGED, 0)
+	_NetWebView2_NavigateToString($oWebV2M, $sHTML, $NETWEBVIEW2_MESSAGE__TITLE_CHANGED)
 
-	; Give the browser 1 second to "view" the file and then print.
-	AdlibRegister("_TriggerPDF", 1000)
-EndFunc   ;==>CreateAndSavePDF
-
-Func _TriggerPDF()
-	AdlibUnRegister("_TriggerPDF") ; Stop the repetition.
+	; save to PDF
 	Local $sFinalPDF = @ScriptDir & "\" & @HOUR & @MIN & @SEC & "_" & @MSEC & "_Health_Report.pdf"
 	$oWebV2M.ExportToPdf($sFinalPDF)
-EndFunc   ;==>_TriggerPDF
+
+EndFunc   ;==>_CreateAndSavePDF
 
 ; MessageTip
-Func ShowWebNotification($sMessage, $sBgColor = "#4CAF50", $iDuration = 3000)
+Func _ShowWebNotification($oWebV2M, $sMessage, $sBgColor = "#4CAF50", $iDuration = 3000)
 	; We use a unique ID 'autoit-notification' to find and replace existing alerts
 	Local $sJS = _
 			"var oldDiv = document.getElementById('autoit-notification');" & _
@@ -454,35 +456,35 @@ Func ShowWebNotification($sMessage, $sBgColor = "#4CAF50", $iDuration = 3000)
 			"}, " & $iDuration & ");"
 
 	$oWebV2M.ExecuteScript($sJS)
-EndFunc   ;==>ShowWebNotification
+EndFunc   ;==>_ShowWebNotification
 
-Func ActivateSeoAudit()
+Func _ActivateSeoAudit($oWebV2M)
 	Local $sCSS = "img:not([alt]) { border: 10px solid red !important; outline: 5px solid yellow !important; } " & _
 			"a[href='#'] { background: #ffea00 !important; color: black !important; border: 2px dashed black !important; }"
 	$oWebV2M.InjectCss($sCSS)
-EndFunc   ;==>ActivateSeoAudit
+EndFunc   ;==>_ActivateSeoAudit
 
-Func ActivateDarkMode()
+Func _ActivateDarkMode($oWebV2M)
 	Local $sCSS = "html, body { background: #121212 !important; color: #e0e0e0 !important; } " & _
 			"a { color: #bb86fc !important; }"
 	$oWebV2M.InjectCss($sCSS)
-EndFunc   ;==>ActivateDarkMode
+EndFunc   ;==>_ActivateDarkMode
 
-Func HideAllPopups()
+Func _HideAllPopups($oWebV2M)
 	; A list of the most common selectors for cookie banners and popups
 	Local $sSelectors = ".fc-consent-root, .cc-window, #onetrust-consent-sdk, .css-privacy-banner"
 
 	; We send it through InjectCss
 	$oWebV2M.InjectCss($sSelectors & " { display: none !important; visibility: hidden !important; pointer-events: none !important; }")
-EndFunc   ;==>HideAllPopups
+EndFunc   ;==>_HideAllPopups
 
-Func SetAdBlock($bEnable = True)
+Func _SetAdBlock($oWebV2M, $bEnable = True)
 	If $bEnable Then
 		; clean the old list so we don't have duplicates
 		$oWebV2M.ClearBlockRules()
 
 		; activate the switch
-		$oWebV2M.SetAdBlock(True)
+		$oWebV2M._SetAdBlock(True)
 
 		; Add rules
 		$oWebV2M.AddBlockRule("doubleclick.net")
@@ -493,37 +495,36 @@ Func SetAdBlock($bEnable = True)
 
 		ConsoleWrite("+> ️AdBlocker Enabled" & @CRLF)
 	Else
-		$oWebV2M.SetAdBlock(False)
+		$oWebV2M._SetAdBlock(False)
 		$oWebV2M.ClearBlockRules() ; Optional: clear memory when closing
 		ConsoleWrite("+> ️AdBlocker Disabled." & @CRLF)
 	EndIf
-EndFunc   ;==>SetAdBlock
+EndFunc   ;==>_SetAdBlock
 
-Func JS_Example()
-	Local $sJS = ""
-	$sJS &= "var results = [];" & @CRLF
-	$sJS &= "var rows = document.querySelectorAll('table tr');" & @CRLF
-	$sJS &= "rows.forEach(row => {" & @CRLF
-	$sJS &= "    var cells = row.querySelectorAll('td');" & @CRLF
-	$sJS &= "    if (cells.length >= 2) {" & @CRLF
-	$sJS &= "        // innerText automatically cleans up <wbr> and <tb> tags" & @CRLF
-	$sJS &= "        var name = cells[0].innerText.trim();" & @CRLF
-	$sJS &= "        var desc = cells[1].innerText.trim();" & @CRLF
-	$sJS &= "        " & @CRLF
-	$sJS &= "        desc = desc.replace(/[\r\n]+/g, ' ');" & @CRLF
-	$sJS &= "        " & @CRLF
-	$sJS &= "        results.push(name + ' | ' + desc);" & @CRLF
-	$sJS &= "    }" & @CRLF
-	$sJS &= "});" & @CRLF
-	$sJS &= "if (results.length > 0) {" & @CRLF
-	$sJS &= "    window.chrome.webview.postMessage('SAVE_CSV|' + results.join('\n'));" & @CRLF
-	$sJS &= "} else {" & @CRLF
-	$sJS &= "    window.chrome.webview.postMessage('ERROR: No data found in table cells');" & @CRLF
-	$sJS &= "}" & @CRLF
-	Return $sJS
-EndFunc   ;==>JS_Example
+Func __JS_Example()
+	Return _
+			"var results = [];" & @CRLF & _
+			"var rows = document.querySelectorAll('table tr');" & @CRLF & _
+			"rows.forEach(row => {" & @CRLF & _
+			"    var cells = row.querySelectorAll('td');" & @CRLF & _
+			"    if (cells.length >= 2) {" & @CRLF & _
+			"        // innerText automatically cleans up <wbr> and <tb> tags" & @CRLF & _
+			"        var name = cells[0].innerText.trim();" & @CRLF & _
+			"        var desc = cells[1].innerText.trim();" & @CRLF & _
+			"        " & @CRLF & _
+			"        desc = desc.replace(/[\r\n]+/g, ' ');" & @CRLF & _
+			"        " & @CRLF & _
+			"        results.push(name + ' | ' + desc);" & @CRLF & _
+			"    }" & @CRLF & _
+			"});" & @CRLF & _
+			"if (results.length > 0) {" & @CRLF & _
+			"    window.chrome.webview.postMessage('SAVE_CSV|' + results.join('\n'));" & @CRLF & _
+			"} else {" & @CRLF & _
+			"    window.chrome.webview.postMessage('ERROR: No data found in table cells');" & @CRLF & _
+			"}"
+EndFunc   ;==>__JS_Example
 
-Func _ErrFunc($oError) ; Global COM Error Handler
+Func __ErrFunc($oError) ; Global COM Error Handler
 	ConsoleWrite('@@ Line(' & $oError.scriptline & ') : COM Error Number: (0x' & Hex($oError.number, 8) & ') ' & $oError.windescription & @CRLF)
-EndFunc   ;==>_ErrFunc
+EndFunc   ;==>__ErrFunc
 
