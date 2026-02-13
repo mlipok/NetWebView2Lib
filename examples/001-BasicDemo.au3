@@ -32,7 +32,7 @@ Func Main()
 	If @error Then Return SetError(@error, @extended, $oWebV2M)
 
 	Local $sProfileDirectory = @ScriptDir & "\NetWebView2Lib-UserDataFolder"
-	_NetWebView2_Initialize($oWebV2M, $hGUI, $sProfileDirectory, 0, 0, 0, 0, True, True, True, 1.2, "0x2B2B2B")
+	_NetWebView2_Initialize($oWebV2M, $hGUI, $sProfileDirectory, 0, 0, 0, 0, True, True, 1.2, "0x2B2B2B", False)
 	If @error Then Return SetError(@error, @extended, $oWebV2M)
 
 	__Example_Log(@ScriptLineNumber, "After: _NetWebView2_Initialize()")
