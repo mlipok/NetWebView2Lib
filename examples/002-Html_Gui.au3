@@ -18,6 +18,7 @@ Global $idBlue, $idRed
 _Example()
 
 Func _Example()
+	ConsoleWrite("! MicrosoftEdgeWebview2 : version check: " & _NetWebView2_IsAlreadyInstalled() & ' ERR=' & @error & ' EXT=' & @extended & @CRLF)
 
 	Local $oWebV2M, $oBridge
 	_Create_Form($oWebV2M, $oBridge)
@@ -75,7 +76,7 @@ Func _Create_Form(ByRef $oWebV2M, ByRef $oBridge)
 	#forceref $oBridge
 
 	Local $sHTML = "<html><head><meta charset='UTF-8'><style>:" & __FormCSS() & "</style></head><body>" & __FormHTML() & "</body></html>"
-	_NetWebView2_NavigateToString($oWebV2M, $sHTML, $NETWEBVIEW2_MESSAGE__TITLE_CHANGED, 5000)
+	_NetWebView2_NavigateToString($oWebV2M, $sHTML, $NETWEBVIEW2_MESSAGE__TITLE_CHANGED, "", 5000)
 	GUISetState(@SW_SHOW, $hGUI)
 EndFunc   ;==>_Create_Form
 
