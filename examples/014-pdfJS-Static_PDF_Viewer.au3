@@ -25,6 +25,8 @@
 _Example()
 
 Func _Example()
+	ConsoleWrite("! MicrosoftEdgeWebview2 : version check: " & _NetWebView2_IsAlreadyInstalled() & ' ERR=' & @error & ' EXT=' & @extended & @CRLF)
+
 	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc)
 	#forceref $oMyError
 
@@ -236,7 +238,6 @@ Func __SetupStaticPDF(ByRef $oWeb, $s_PDF_Path, $sExpectedTitle, $bBlockLinks = 
 	ConsoleWrite("- $s_Viewer_URL= " & $s_Viewer_URL & @CRLF)
 
 	_NetWebView2_Navigate($oWeb, $s_Viewer_URL, $NETWEBVIEW2_MESSAGE__TITLE_CHANGED, $sExpectedTitle, 5000)
-	#Region ; mLipok #TODO this should be fixed by better LoadWait, I mean adding a check if the desired title appears
 	ConsoleWrite("! we're done with navigation, but check how many more messages there are below. SLN=" & @ScriptLineNumber & @CRLF)
 	MsgBox($MB_TOPMOST, "TEST #" & @ScriptLineNumber, 'Wait for all messages to full loading PDF by pdf.js')
 	#EndRegion ; mLipok #TODO this should be fixed by better LoadWait, I mean adding a check if the desired title appears
