@@ -283,7 +283,7 @@ EndFunc   ;==>__SetupStaticPDF
 Func _NetWebView2_WaitForReadyState($oWebV2M, $iTimeout_ms = 5000)
 	Local Const $s_Prefix = ">>>[_NetWebView2_WaitForReadyState]:"
 
-	If ObjName($oWebV2M, $OBJ_PROGID) <> 'NetWebView2.Manager' Then Return SetError(2, 0, False)
+	If (Not IsObj($oWebV2M)) Or ObjName($oWebV2M, $OBJ_PROGID) <> 'NetWebView2.Manager' Then Return SetError(2, 0, False)
 	Local $hTimer = TimerInit()
 	Local $sReadyState = ""
 
@@ -314,7 +314,7 @@ EndFunc   ;==>_NetWebView2_WaitForReadyState
 
 ; New to replace _NetWebView2_AddInitializationScript in UDF
 Func New_NetWebView2_AddInitializationScript($oWebV2M, $vScript)
-	If ObjName($oWebV2M, $OBJ_PROGID) <> 'NetWebView2.Manager' Then Return SetError(1, 0, "ERROR: Invalid Object")
+	If (Not IsObj($oWebV2M)) Or ObjName($oWebV2M, $OBJ_PROGID) <> 'NetWebView2.Manager' Then Return SetError(1, 0, "ERROR: Invalid Object")
 
 	; Smart Detection
 	If FileExists($vScript) Then $vScript = FileRead($vScript)
