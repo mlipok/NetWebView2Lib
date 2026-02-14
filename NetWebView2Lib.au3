@@ -326,7 +326,8 @@ Func _NetWebView2_IsAlreadyInstalled()
 		$sResult = RegRead('HKEY_CURRENT_USER\Software\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}', 'pv')
 		$iExtended = 2
 	EndIf
-	Return SetError(@error, $iExtended, $sResult)
+	If @AutoItX64 Then $iExtended += 10
+	Return SetError(($sResult = ''), $iExtended, $sResult)
 
 #cs The two registry locations to inspect on 64-bit Windows: https://learn.microsoft.com/pl-pl/microsoft-edge/webview2/concepts/distribution?tabs=dotnetcsharp#detect-if-a-webview2-runtime-is-already-installed
 HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}
@@ -2146,3 +2147,4 @@ EndFunc   ;==>__NetWebView2_Events__OnScreenCaptureStarting
 #EndRegion ; NetWebView2Lib UDF - === EVENT HANDLERS === #TODO
 
 #EndRegion ; NetWebView2Lib UDF - === EVENT HANDLERS ===
+
