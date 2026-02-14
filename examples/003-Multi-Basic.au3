@@ -12,6 +12,8 @@
 _Main()
 
 Func _Main()
+	ConsoleWrite("! MicrosoftEdgeWebview2 : version check: " & _NetWebView2_IsAlreadyInstalled() & ' ERR=' & @error & ' EXT=' & @extended & @CRLF)
+
 	; --- Main GUI Setup ---
 	Local $hMainGUI = GUICreate("Multi-WebView2 v2.0.0 Standard", 1000, 600, -1, -1, BitOR($WS_OVERLAPPEDWINDOW, $WS_CLIPCHILDREN))
 	GUISetState(@SW_SHOW, $hMainGUI)
