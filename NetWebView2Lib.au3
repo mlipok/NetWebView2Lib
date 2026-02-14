@@ -511,7 +511,7 @@ Func _NetWebView2_LoadWait($oWebV2M, $iWaitMessage = $NETWEBVIEW2_MESSAGE__TITLE
 
 		; RULE 2: TimeOut Check
 		If $iTimeOut_ms And TimerDiff($hTimer) >= $iTimeOut_ms Then
-			__NetWebView2_Log(@ScriptLineNumber, $s_Prefix , 1)
+			__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & ' - TIME OUT - the waiting time has expired', 1)
 			Return SetError(2, 0, False)
 		EndIf
 
@@ -2051,5 +2051,6 @@ Volatile Func __NetWebView2_Events__OnBasicAuthenticationRequested($oWebV2M, $hG
 	$oArgs = 0
 EndFunc   ;==>__NetWebView2_Events__OnBasicAuthenticationRequested
 #EndRegion ; NetWebView2Lib UDF - === EVENT HANDLERS ===
+
 
 
