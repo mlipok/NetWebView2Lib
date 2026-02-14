@@ -31,6 +31,8 @@ Global $_g_bNetWebView2_DebugInfo = True
 Global $_g_bNetWebView2_DebugDev = (@Compiled = 1)
 #Region ; ENUMS
 
+#Region ; ENUMS
+
 ;~ Global Enum _
 ;~ 		$NETWEBVIEW2_ERR__INIT_FAILED, _
 ;~ 		$NETWEBVIEW2_ERR__PROFILE_NOT_READY, _
