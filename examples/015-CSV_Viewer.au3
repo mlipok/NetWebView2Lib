@@ -4,7 +4,7 @@
 #AutoIt3Wrapper_AU3Check_Parameters=-d -w 1 -w 2 -w 3 -w 4 -w 5 -w 6 -w 7
 #Au3Stripper_Ignore_Funcs=__NetWebView2_WebEvents_*,__NetWebView2_JSEvents_*
 
-; CSV_Viewer.au3
+; 015-CSV_Viewer.au3
 
 #include <Array.au3>
 #include <GUIConstantsEx.au3>
@@ -37,7 +37,7 @@ Func _Example()
 	If @error Then Return SetError(@error, @extended, $oWebV2M)
 
 	Local $sProfileDirectory = @ScriptDir & "\NetWebView2Lib-UserDataFolder"
-	_NetWebView2_Initialize($oWebV2M, $hGUI, $sProfileDirectory, 0, 50, 0, 0, True, True, True, 1.2, "0x2B2B2B")
+	_NetWebView2_Initialize($oWebV2M, $hGUI, $sProfileDirectory, 0, 50, 0, 0, True, True, 1.2, "0x2B2B2B")
 
 	; Initial CSV display
 	_Web_CSVViewer($oWebV2M) ; 🏆 https://stackblitz.com/edit/web-platform-3kkvy2?file=index.html
@@ -112,7 +112,8 @@ Func _Web_CSVViewer(ByRef $oWeb, $sFileData = "")
 			"</body></html>"
 
 	; 4. Loading - using NavigateToString to refresh all the content
-	$oWeb.NavigateToString($sHTML)
+	_NetWebView2_NavigateToString($oWeb, $sHTML)
+
 EndFunc   ;==>_Web_CSVViewer
 #EndRegion ; === UTILS ===
 #EndRegion ; UDF TESTING EXAMPLE

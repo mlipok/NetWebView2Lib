@@ -6,14 +6,15 @@
 #AutoIt3Wrapper_AU3Check_Parameters=-d -w 1 -w 2 -w 3 -w 4 -w 5 -w 6 -w 7
 #Au3Stripper_Ignore_Funcs=__NetWebView2_WebEvents_*,__NetWebView2_JSEvents_*
 
-; CSV_editor.au3
+; 016-CSV_Editor.au3
 
+#include <Array.au3>
 #include <GUIConstantsEx.au3>
 #include <WindowsConstants.au3>
-#include <Array.au3>
+#include "..\NetWebView2Lib.au3"
 
 ; Register exit function to ensure clean WebView2 shutdown
-OnAutoItExitRegister("_ExitApp")
+OnAutoItExitRegister(_ExitApp)
 
 ; Global objects
 Global $oWeb, $oJS
@@ -232,7 +233,7 @@ Func _Web_CSVViewer(ByRef $oWeb, $sFileData = "")
 			"<div class='container'><table id='table'></table></div>" & _
 			"<script>" & $sJS & "</script></body></html>"
 
-	$oWeb.NavigateToString($sHTML)
+	_NetWebView2_NavigateToString($oWeb, $sHTML)
 EndFunc   ;==>_Web_CSVViewer
 
 Func _ErrFunc($oError) ; Global COM Error Handler

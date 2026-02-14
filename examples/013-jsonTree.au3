@@ -55,7 +55,7 @@ Func _Example()
 	If @error Then Return SetError(@error, @extended, $oWebV2M)
 
 	Local $sProfileDirectory = @ScriptDir & "\NetWebView2Lib-UserDataFolder"
-	_NetWebView2_Initialize($oWebV2M, $hGUI, $sProfileDirectory, 0, 50, 0, 0, True, True, True, 1.2, "0x2B2B2B")
+	_NetWebView2_Initialize($oWebV2M, $hGUI, $sProfileDirectory, 0, 50, 0, 0, True, True, 1.2, "0x2B2B2B")
 
 	; Initial JSON display
 	Local $sMyJson = '{"Game": "Witcher 3", "ID": 1, "Meta": {"Developer": "CD Projekt", "Year": 2015 }, "Tags": ["RPG", "Open World"]}'

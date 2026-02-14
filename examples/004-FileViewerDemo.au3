@@ -36,6 +36,8 @@ Global $idLabelStatus
 _Example()
 
 Func _Example()
+	ConsoleWrite("! MicrosoftEdgeWebview2 : version check: " & _NetWebView2_IsAlreadyInstalled() & ' ERR=' & @error & ' EXT=' & @extended & @CRLF)
+
 	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc)
 	#forceref $oMyError
 
@@ -54,7 +56,7 @@ Func _Example()
 ;~ 	If @error Then Return SetError(@error, @extended, $oWebV2M)
 
 	Local $sProfileDirectory = @ScriptDir & "\NetWebView2Lib-UserDataFolder"
-	_NetWebView2_Initialize($oWebV2M, $hGUI, $sProfileDirectory, 0, 0, 0, $iHeight - 20, True, True, True, 1.2, "0x2B2B2B")
+	_NetWebView2_Initialize($oWebV2M, $hGUI, $sProfileDirectory, 0, 0, 0, $iHeight - 20, True, True, 1.2, "0x2B2B2B")
 
 	GUISetState(@SW_SHOW, $hGUI)
 	WinSetOnTop($hGUI, '', $WINDOWS_ONTOP)
@@ -62,21 +64,21 @@ Func _Example()
 	Local $s_PDF_FileFullPath
 
 	#TIP: FitToPage: https://stackoverflow.com/questions/78820187/how-to-change-webview2-fit-to-page-button-on-pdf-toolbar-default-to-fit-to-width#comment138971950_78821231
-	_WebView2_ShowPD($hGUI, $oWebV2M, "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf#view=FitH")
+	_NetWebView2_NavigateToPDF($oWebV2M, "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", '#view=FitH', $NETWEBVIEW2_MESSAGE__TITLE_CHANGED, "", 5000, 1000, True)
+	MsgBox($MB_TOPMOST, " _NetWebView2_NavigateToPDF() TEST #" & @ScriptLineNumber, $s_PDF_FileFullPath, 0, $hGUI)
 
 	#TIP: Open desired PAGE: https://stackoverflow.com/questions/68500164/cycle-pdf-pages-in-wpf-webview2#comment135402565_68566860
-	$s_PDF_FileFullPath = "file:///" & @ScriptDir & '/FileViewerDemo_1.pdf#page=1'
-	_WebView2_ShowPD($hGUI, $oWebV2M, $s_PDF_FileFullPath)
-;~ 	MsgBox($MB_TOPMOST, " _WebView2_ShowPD() TEST #" & @ScriptLineNumber, $s_PDF_FileFullPath, 0, $hGUI)
+	$s_PDF_FileFullPath = "file:///" & @ScriptDir & '/FileViewerDemo_1.pdf'
+	_NetWebView2_NavigateToPDF($oWebV2M, $s_PDF_FileFullPath, '#page=1', $NETWEBVIEW2_MESSAGE__TITLE_CHANGED, "", 5000, 1000, True)
+	MsgBox($MB_TOPMOST, " _NetWebView2_NavigateToPDF() TEST #" & @ScriptLineNumber, $s_PDF_FileFullPath, 0, $hGUI)
 
 	$s_PDF_FileFullPath = "file:///" & @ScriptDir & '/FileViewerDemo_2.pdf'
-	_WebView2_ShowPD($hGUI, $oWebV2M, $s_PDF_FileFullPath)
-;~ 	MsgBox($MB_TOPMOST, " _WebView2_ShowPD() TEST #" & @ScriptLineNumber, $s_PDF_FileFullPath, 0, $hGUI)
+	_NetWebView2_NavigateToPDF($oWebV2M, $s_PDF_FileFullPath, '#view=FitH', $NETWEBVIEW2_MESSAGE__TITLE_CHANGED, "", 5000, 1000, True)
+	MsgBox($MB_TOPMOST, " _NetWebView2_NavigateToPDF() TEST #" & @ScriptLineNumber, $s_PDF_FileFullPath, 0, $hGUI)
 
-	$s_PDF_FileFullPath = "file:///" & @ScriptDir & '/FileViewerDemo_3.pdf#view=FitH'
-	_WebView2_ShowPD($hGUI, $oWebV2M, $s_PDF_FileFullPath)
-
-;~ 	MsgBox($MB_TOPMOST, " _WebView2_ShowPD() TEST #" & @ScriptLineNumber, $s_PDF_FileFullPath, 0, $hGUI)
+	$s_PDF_FileFullPath = "file:///" & @ScriptDir & '/FileViewerDemo_3.pdf'
+	_NetWebView2_NavigateToPDF($oWebV2M, $s_PDF_FileFullPath, '#view=FitH', $NETWEBVIEW2_MESSAGE__TITLE_CHANGED, "", 5000, 1000, True)
+	MsgBox($MB_TOPMOST, " _NetWebView2_NavigateToPDF() TEST #" & @ScriptLineNumber, $s_PDF_FileFullPath, 0, $hGUI)
 
 	; Main Loop
 	While 1
@@ -90,50 +92,3 @@ Func _Example()
 	_NetWebView2_CleanUp($oWebV2M, $oJSBridge)
 	GUIDelete($hGUI)
 EndFunc   ;==>_Example
-
-Func __WebView2_freezer($hMainGUI_Window, $hWebView2_Window)
-	Local $aPos = WinGetPos($hWebView2_Window)
-
-	Local $hPrev = GUISwitch($hMainGUI_Window)
-	Local $idPic = GUICtrlCreatePic('', 0, 0, $aPos[2], $aPos[3])
-	Local $hPic = GUICtrlGetHandle($idPic)
-	GUISwitch($hPrev)
-
-	; Create bitmap
-	Local $hDC = _WinAPI_GetDC($hPic)
-	Local $hDestDC = _WinAPI_CreateCompatibleDC($hDC)
-	Local $hBitmap = _WinAPI_CreateCompatibleBitmap($hDC, $aPos[2], $aPos[3])
-	Local $hDestSv = _WinAPI_SelectObject($hDestDC, $hBitmap)
-	Local $hSrcDC = _WinAPI_CreateCompatibleDC($hDC)
-	Local $hBmp = _WinAPI_CreateCompatibleBitmap($hDC, $aPos[2], $aPos[3])
-	Local $hSrcSv = _WinAPI_SelectObject($hSrcDC, $hBmp)
-	_WinAPI_PrintWindow($hWebView2_Window, $hSrcDC, 2)
-	_WinAPI_BitBlt($hDestDC, 0, 0, $aPos[2], $aPos[3], $hSrcDC, 0, 0, $MERGECOPY)
-
-	_WinAPI_ReleaseDC($hPic, $hDC)
-	_WinAPI_SelectObject($hDestDC, $hDestSv)
-	_WinAPI_SelectObject($hSrcDC, $hSrcSv)
-	_WinAPI_DeleteDC($hDestDC)
-	_WinAPI_DeleteDC($hSrcDC)
-	_WinAPI_DeleteObject($hBmp)
-
-	; Set bitmap to control
-	_SendMessage($hPic, $STM_SETIMAGE, 0, $hBitmap)
-	Local $hObj = _SendMessage($hPic, $STM_GETIMAGE)
-	If $hObj <> $hBitmap Then
-		_WinAPI_DeleteObject($hBitmap)
-	EndIf
-	Return $idPic
-EndFunc   ;==>__WebView2_freezer
-
-Func _WebView2_ShowPD($hMainGUI_Window, $oWebV2M, $s_PDF_FileFullPath)
-	Local $hWebView2_Window = _WinAPI_GetWindow($hMainGUI_Window, $GW_CHILD)
-	Local $idPic = __WebView2_freezer($hMainGUI_Window, $hWebView2_Window)
-	_SendMessage($hWebView2_Window, $WM_SETREDRAW, False, 0) ; Disables ; https://www.autoitscript.com/forum/topic/199172-disable-gui-updating-repainting/
-	_NetWebView2_Navigate($oWebV2M, $s_PDF_FileFullPath)
-	Sleep(1000)
-	_SendMessage($hWebView2_Window, $WM_SETREDRAW, True, 0) ; Enables
-	_WinAPI_RedrawWindow($hWebView2_Window, 0, 0, BitOR($RDW_FRAME, $RDW_INVALIDATE, $RDW_ALLCHILDREN))  ; Repaints
-	GUICtrlDelete($idPic)
-EndFunc   ;==>_WebView2_ShowPD
-
