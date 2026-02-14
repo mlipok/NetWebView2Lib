@@ -54,7 +54,10 @@ Func _Example()
 	ConsoleWrite("$sScriptId=" & $sScriptId & @CRLF)
 
 	; navigate to the page
-	__SetupStaticPDF($oWeb, @ScriptDir & "\invoice-plugin-sample.pdf", True, False, True)
+	Local $sFileName = "invoice-plugin-sample.pdf"
+	Local $sRegExp_Title = "(?i) - " & $sFileName
+
+	__SetupStaticPDF($oWeb, @ScriptDir & "\" & $sFileName, $sRegExp_Title, True, False, True)
 
 	#Region ; now we can call the script directly from the JavaScript library "NetWebView2Lib_pdfjs_Tools.js" - some pdfjs magic stuff ;)
 	Local $s_JavaScript_snipp = ''
@@ -149,7 +152,7 @@ Func __UserEventHandler__Bridge_OnMessageReceived($oWebV2M, $hGUI, $sMsg)
 	EndIf
 EndFunc   ;==>__UserEventHandler__Bridge_OnMessageReceived
 
-Func __SetupStaticPDF(ByRef $oWeb, $s_PDF_Path, $bBlockLinks = False, $bBlockSelection = False, $bShowToolbar = False)
+Func __SetupStaticPDF(ByRef $oWeb, $s_PDF_Path, $sExpectedTitle, $bBlockLinks = False, $bBlockSelection = False, $bShowToolbar = False)
 	; 🏆 https://mozilla.github.io/pdf.js/
 
 	Local $sBlockLinksJS = ""
@@ -232,7 +235,7 @@ Func __SetupStaticPDF(ByRef $oWeb, $s_PDF_Path, $bBlockLinks = False, $bBlockSel
 	Local $s_Viewer_URL = "file:///" & $s_PDF_JS_URL & $s_PDF_URL
 	ConsoleWrite("- $s_Viewer_URL= " & $s_Viewer_URL & @CRLF)
 
-	_NetWebView2_Navigate($oWeb, $s_Viewer_URL)
+	_NetWebView2_Navigate($oWeb, $s_Viewer_URL, $NETWEBVIEW2_MESSAGE__TITLE_CHANGED, $sExpectedTitle, 5000)
 	#Region ; mLipok #TODO this should be fixed by better LoadWait, I mean adding a check if the desired title appears
 	ConsoleWrite("! we're done with navigation, but check how many more messages there are below. SLN=" & @ScriptLineNumber & @CRLF)
 	MsgBox($MB_TOPMOST, "TEST #" & @ScriptLineNumber, 'Wait for all messages to full loading PDF by pdf.js')
