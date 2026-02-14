@@ -10,6 +10,7 @@
 
 #include <Array.au3>
 #include <GUIConstantsEx.au3>
+#include <MsgBoxConstants.au3>
 #include <WinAPIShPath.au3>
 #include <WindowsConstants.au3>
 
@@ -31,6 +32,10 @@ Global Enum _ ; $NETWEBVIEW2_MESSAGE__* are set by mainly by __NetWebView2_Event
 		$NETWEBVIEW2_MESSAGE__NONE, _ ; UDF setting - not related directly to API REFERENCES
 		$NETWEBVIEW2_MESSAGE__INIT_FAILED, _
 		$NETWEBVIEW2_MESSAGE__PROFILE_NOT_READY, _
+		$NETWEBVIEW2_MESSAGE__BROWSER_GOT_FOCUS, _ ; may happend before $NETWEBVIEW2_MESSAGE__INIT_READY
+		$NETWEBVIEW2_MESSAGE__BROWSER_LOST_FOCUS, _ ; may happend before $NETWEBVIEW2_MESSAGE__NAV_COMPLETED
+		$NETWEBVIEW2_MESSAGE__WINDOW_RESIZED, _ ; may happend before $NETWEBVIEW2_MESSAGE__NAV_COMPLETED
+		$NETWEBVIEW2_MESSAGE__ZOOM_CHANGED, _ ; may happend before $NETWEBVIEW2_MESSAGE__NAV_COMPLETED
 		$NETWEBVIEW2_MESSAGE__INIT_READY, _
 		$NETWEBVIEW2_MESSAGE__NAV_STARTING, _
 		$NETWEBVIEW2_MESSAGE__URL_CHANGED, _
@@ -42,10 +47,11 @@ Global Enum _ ; $NETWEBVIEW2_MESSAGE__* are set by mainly by __NetWebView2_Event
 		$NETWEBVIEW2_MESSAGE__CRITICAL_ERROR, _
 		$NETWEBVIEW2_MESSAGE__DOM_CONTENT_LOADED, _ ; #TODO https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/navigation-events
 		$NETWEBVIEW2_MESSAGE__NAV_ERROR, _
+		$NETWEBVIEW2_MESSAGE__READY_STATE_ERROR, _
 		$NETWEBVIEW2_MESSAGE__NAV_COMPLETED, _
 		$NETWEBVIEW2_MESSAGE__TITLE_CHANGED, _
 		$NETWEBVIEW2_MESSAGE__EXTENSION, _
-		$NETWEBVIEW2_MESSAGE__EXTENSION_LOADED, _
+		$NETWEBVIEW2_MESSAGE__EXTENSION_LOADED, _ ; #TODO Question ? when EXTENSION is loaded ? before $NETWEBVIEW2_MESSAGE__INIT_READY ? before $NETWEBVIEW2_MESSAGE__NAV_COMPLETED ?
 		$NETWEBVIEW2_MESSAGE__EXTENSION_FAILED, _
 		$NETWEBVIEW2_MESSAGE__EXTENSION_REMOVED, _
 		$NETWEBVIEW2_MESSAGE__EXTENSION_NOT_FOUND, _
@@ -66,15 +72,11 @@ Global Enum _ ; $NETWEBVIEW2_MESSAGE__* are set by mainly by __NetWebView2_Event
 		$NETWEBVIEW2_MESSAGE__COOKIES_ERROR, _
 		$NETWEBVIEW2_MESSAGE__COOKIE_ADD_ERROR, _
 		$NETWEBVIEW2_MESSAGE__BLOCKED_AD, _
-		$NETWEBVIEW2_MESSAGE__WINDOW_RESIZED, _
-		$NETWEBVIEW2_MESSAGE__ZOOM_CHANGED, _
 		$NETWEBVIEW2_MESSAGE__DOWNLOAD_STARTING, _
 		$NETWEBVIEW2_MESSAGE__DOWNLOAD_IN_PROGRESS, _
 		$NETWEBVIEW2_MESSAGE__DOWNLOAD_INTERRUPTED, _
 		$NETWEBVIEW2_MESSAGE__DOWNLOAD_COMPLETED, _
 		$NETWEBVIEW2_MESSAGE__RESPONSE_RECEIVED, _
-		$NETWEBVIEW2_MESSAGE__BROWSER_GOT_FOCUS, _
-		$NETWEBVIEW2_MESSAGE__BROWSER_LOST_FOCUS, _
 		$NETWEBVIEW2_MESSAGE__UNKNOWN_MESSAGE, _
 		$NETWEBVIEW2_MESSAGE___FAKE_COUNTER
 
@@ -143,7 +145,9 @@ EndFunc   ;==>_NetWebView2_CreateManager
 ; #FUNCTION# ====================================================================================================================
 ; Name ..........: _NetWebView2_Initialize
 ; Description ...:
-; Syntax ........: _NetWebView2_Initialize($oWebV2M, $hUserGUI, $s_ProfileDirectory[, $i_Left = 0[, $i_Top = 0[, $i_Width = 0[, $i_Height = 0[, $b_LoadWait = True[, $b_SetAutoResize = True[, $b_DevToolsEnabled = True[, $i_ZoomFactor = 1.0[, $s_BackColor = "0x2B2B2B"[, $b_InitConsole = False]]]]]]]]]])
+; Syntax ........: _NetWebView2_Initialize($oWebV2M, $hUserGUI, $s_ProfileDirectory[, $i_Left = 0[, $i_Top = 0[, $i_Width = 0[,
+;                  $i_Height = 0[, $b_SetAutoResize = True[, $b_DevToolsEnabled = True[, $i_ZoomFactor = 1.0[,
+;                  $s_BackColor = "0x2B2B2B"[, $b_InitConsole = False]]]]]]]]])
 ; Parameters ....: $oWebV2M             - an object.
 ;                  $hUserGUI            - a handle to User window in which new WebView Window containng the controler should be placed/added
 ;                  $s_ProfileDirectory  - a string value.
@@ -151,7 +155,6 @@ EndFunc   ;==>_NetWebView2_CreateManager
 ;                  $i_Top               - [optional] an integer value. Default is 0.
 ;                  $i_Width             - [optional] an integer value. Default is 0.
 ;                  $i_Height            - [optional] an integer value. Default is 0.
-;                  $b_LoadWait          - [optional] a boolean value. Default is True.
 ;                  $b_SetAutoResize     - [optional] a boolean value. Default is True.
 ;                  $b_DevToolsEnabled   - [optional] a boolean value. Default is True. Allow F12 to show Developer Tools in WebView2 component
 ;                  $i_ZoomFactor        - [optional] an integer value. Default is 1.0.
@@ -165,9 +168,9 @@ EndFunc   ;==>_NetWebView2_CreateManager
 ; Link ..........:
 ; Example .......: No
 ; ===============================================================================================================================
-Func _NetWebView2_Initialize($oWebV2M, $hUserGUI, $s_ProfileDirectory, $i_Left = 0, $i_Top = 0, $i_Width = 0, $i_Height = 0, $b_LoadWait = True, $b_SetAutoResize = True, $b_DevToolsEnabled = True, $i_ZoomFactor = 1.0, $s_BackColor = "0x2B2B2B", $b_InitConsole = False)
+Func _NetWebView2_Initialize($oWebV2M, $hUserGUI, $s_ProfileDirectory, $i_Left = 0, $i_Top = 0, $i_Width = 0, $i_Height = 0, $b_SetAutoResize = True, $b_DevToolsEnabled = True, $i_ZoomFactor = 1.0, $s_BackColor = "0x2B2B2B", $b_InitConsole = False)
 
-	Local Const $s_Prefix = "[_NetWebView2_Initialize]: GUI:" & $hUserGUI & " ProfileDirectory:" & $s_ProfileDirectory & " LEFT:" & $i_Left & " TOP:" & $i_Top & " WIDTH" & $i_Width & " HEIGHT:" & $i_Height & " LOADWAIT:" & $b_LoadWait & " SETAUTORESIZE:" & $b_SetAutoResize & " SetAutoResize:" & $b_DevToolsEnabled & " ZoomFactor:" & $i_ZoomFactor & " BackColor:" & $s_BackColor
+	Local Const $s_Prefix = "[_NetWebView2_Initialize]: GUI:" & $hUserGUI & " ProfileDirectory:" & $s_ProfileDirectory & " LEFT:" & $i_Left & " TOP:" & $i_Top & " WIDTH" & $i_Width & " HEIGHT:" & $i_Height & " SETAUTORESIZE:" & $b_SetAutoResize & " SetAutoResize:" & $b_DevToolsEnabled & " ZoomFactor:" & $i_ZoomFactor & " BackColor:" & $s_BackColor
 	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc) ; Local COM Error Handler
 	#forceref $oMyError
 
@@ -180,17 +183,25 @@ Func _NetWebView2_Initialize($oWebV2M, $hUserGUI, $s_ProfileDirectory, $i_Left =
 	; This prevents the COM layer from changing the AutoIt variable type from Ptr to Int64.
 	Local $iInit = $oWebV2M.Initialize(($hUserGUI), $s_ProfileDirectory, $i_Left, $i_Top, $i_Width, $i_Height)
 	If @error Then Return SetError(@error, @extended, $iInit)
+	If Not @Compiled Then ConsoleWrite("! IFNC: FailureReportFolderPath = " & $oWebV2M.FailureReportFolderPath & @CRLF)
 
+	#Region ; After Initialization wait for the engine to be ready before navigating
+	Local $hTimer = TimerInit()
+	Local $iTimeOut_ms = 10000 ; max 10 seconds for initialization
 	Local $iMessage
-	Do ; Wait for the engine to be ready before navigating
+	Do
 		Sleep(50)
 		$iMessage = __NetWebView2_LastMessageReceived($oWebV2M)
 		If $iMessage = $NETWEBVIEW2_MESSAGE__INIT_FAILED _
 				Or $iMessage = $NETWEBVIEW2_MESSAGE__PROFILE_NOT_READY _
+				Or $iMessage = $NETWEBVIEW2_MESSAGE__PROCESS_FAILED _
 				Or $iMessage = $NETWEBVIEW2_MESSAGE__CRITICAL_ERROR Then
 			Return SetError($iMessage, @extended, '')
 		EndIf
-	Until $b_LoadWait And $oWebV2M.IsReady
+		If TimerDiff($hTimer) >= $iTimeOut_ms Then Return SetError(1, 0, '')
+	Until $oWebV2M.IsReady Or $iMessage = $NETWEBVIEW2_MESSAGE__INIT_READY
+	If Not __NetWebView2_WaitForReadyState($oWebV2M, $hTimer, $iTimeOut_ms) Then Return SetError($NETWEBVIEW2_MESSAGE__READY_STATE_ERROR, 0, '')
+	#EndRegion ; After Initialization wait for the engine to be ready before navigating
 
 	; WebView2 Configuration
 	$oWebV2M.SetAutoResize($b_SetAutoResize) ; Using SetAutoResize(True) to skip WM_SIZE
@@ -205,6 +216,53 @@ Func _NetWebView2_Initialize($oWebV2M, $hUserGUI, $s_ProfileDirectory, $i_Left =
 	If @error Then __NetWebView2_Log(@ScriptLineNumber, $s_Prefix & " !!! Manager Creation ERROR", 1)
 	Return SetError(@error, $oWebV2M.GetBrowserProcessId(), '')
 EndFunc   ;==>_NetWebView2_Initialize
+
+; #INTERNAL_USE_ONLY# ===========================================================================================================
+; Name ..........: __NetWebView2_WaitForReadyState
+; Description ...: Polls the browser until the document.readyState reaches 'complete'.
+; Syntax ........: __NetWebView2_WaitForReadyState($oWebV2M, $hTimer, $iTimeOut_ms)
+; Parameters ....: $oWebV2M       - The WebView2 Manager object.
+;                  $hTimer        - a handle to a caller TimerInit
+;                  $iTimeOut_ms   - Maximum time to wait in milliseconds. 0 for infinite.
+; Return values .: Success: True
+;                  Failure: False, sets @error:
+;                      1 - Timeout reached before document was complete.
+;                      2 - WebView2 object is not valid or ready.
+; Author ........: ioa747
+; Modified.......:
+; Remarks .......: This function uses JavaScript execution to check the internal state of the page.
+;                  Useful for tasks like PDF printing where 'complete' state is mandatory.
+; ===============================================================================================================================
+Func __NetWebView2_WaitForReadyState($oWebV2M, $hTimer, $iTimeOut_ms)
+	Local Const $s_Prefix = ">>>[_NetWebView2_WaitForReadyState]:"
+
+	If Not IsObj($oWebV2M) Then Return SetError(2, 0, False)
+	Local $sReadyState = ""
+
+	While 1
+		; Execute JS via the Bridge (Mode 2)
+		$sReadyState = _NetWebView2_ExecuteScript($oWebV2M, "document.readyState", $NETWEBVIEW2_EXECUTEJS_MODE2_RESULT)
+
+		; Check for the 'complete' state
+		If $sReadyState == "complete" Then
+			__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & " SUCCESS: Document is ready. Timeout_ms: " & Round(TimerDiff($hTimer), 0), 0)
+			Return True
+		EndIf
+
+		; Check for C# Bridge internal errors (Timeout/Init)
+		If StringLeft($sReadyState, 6) == "ERROR:" Then
+			__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & " BRIDGE " & $sReadyState & " Timeout_ms: " & Round(TimerDiff($hTimer), 0), 1)
+			Return SetError(3, 0, False)
+		EndIf
+
+		; Check for AutoIt-side Timeout
+		If $iTimeOut_ms > 0 And TimerDiff($hTimer) > $iTimeOut_ms Then
+			__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & " TIMEOUT: Document state is " & $sReadyState & " Timeout_ms: " & Round(TimerDiff($hTimer), 0), 1)
+			Return SetError(1, 0, False)
+		EndIf
+		Sleep(50)
+	WEnd
+EndFunc   ;==>__NetWebView2_WaitForReadyState
 
 ; #FUNCTION# ====================================================================================================================
 ; Name ..........: _NetWebView2_IsRegisteredCOMObject
@@ -407,9 +465,9 @@ EndFunc   ;==>_NetWebView2_GetVersion
 ; #FUNCTION# ====================================================================================================================
 ; Name...........: _NetWebView2_LoadWait
 ; Description....: Waits for a specific WebView2 status or event with a timeout.
-; Syntax.........: _NetWebView2_LoadWait($oWebV2M[, $iWaitMessage = $NETWEBVIEW2_MESSAGE__INIT_READY[, $iTimeOut_ms = 5000]])
+; Syntax.........: _NetWebView2_LoadWait($oWebV2M[, $iWaitMessage = $NETWEBVIEW2_MESSAGE__TITLE_CHANGED[, $iTimeOut_ms = 5000]])
 ; Parameters.....: $oWebV2M      - The NetWebView2 Manager object.
-;                  $iWaitMessage - The status code to wait for (Default is $NETWEBVIEW2_MESSAGE__INIT_READY).
+;                  $iWaitMessage - The status code to wait for (Default is $NETWEBVIEW2_MESSAGE__TITLE_CHANGED).
 ;                  $iTimeOut_ms  - Timeout in milliseconds (Default is 5000ms). Set to 0 for infinite.
 ; Return values..: Success      - True
 ;                  Failure      - False and sets @error:
@@ -422,7 +480,7 @@ EndFunc   ;==>_NetWebView2_GetVersion
 ; Link ..........:
 ; Example .......: No
 ; ===============================================================================================================================
-Func _NetWebView2_LoadWait($oWebV2M, $iWaitMessage = $NETWEBVIEW2_MESSAGE__INIT_READY, $iTimeOut_ms = 5000)
+Func _NetWebView2_LoadWait($oWebV2M, $iWaitMessage = $NETWEBVIEW2_MESSAGE__TITLE_CHANGED, $iTimeOut_ms = 5000)
 	Local $hTimer = TimerInit()
 
 	; RESET: Clear the status of this instance before starting the wait loop
@@ -432,28 +490,32 @@ Func _NetWebView2_LoadWait($oWebV2M, $iWaitMessage = $NETWEBVIEW2_MESSAGE__INIT_
 		; Allow AutoIt to "breathe" and process the GUI messages
 		Sleep(10)
 
+		; RULE 1: If we reached the target status or higher
+		Local $bWebIsReady = $oWebV2M.IsReady
+		If @error Then Return SetError(1, 0, False) ; browser/COM error ?
+
+		; RULE 2: first TimeOut Check
+		If $iTimeOut_ms And TimerDiff($hTimer) >= $iTimeOut_ms Then Return SetError(2, 0, False)
+
+		; RULE 3: if browser is not ready continue waiting
+		If Not $bWebIsReady Then ContinueLoop ; For navigation events, ensure the browser reports IsReady
+
+		; RULE 4: checking events messages
 		Local $iCurrentStatus = __NetWebView2_LastMessageReceived($oWebV2M)
-
-		; RULE 1: If Navigation Error occurs, EXIT
-		If $iCurrentStatus = $NETWEBVIEW2_MESSAGE__NAV_ERROR Then
+		If $iCurrentStatus = $NETWEBVIEW2_MESSAGE__NAV_ERROR Or $iCurrentStatus = $NETWEBVIEW2_MESSAGE__PROCESS_FAILED Or $iCurrentStatus = $NETWEBVIEW2_MESSAGE__CRITICAL_ERROR Then
 			Return SetError(3, $iCurrentStatus, False)
-		EndIf
-
-		; RULE 2: If we reached the target status or higher
-		If $iCurrentStatus >= $iWaitMessage And $iCurrentStatus < $NETWEBVIEW2_MESSAGE__NAV_ERROR Then
-			; For navigation events, ensure the browser reports IsReady
-			If $iWaitMessage <= $NETWEBVIEW2_MESSAGE__TITLE_CHANGED Then
-				If $oWebV2M.IsReady Then Return True
-			Else
-				; For UI/Direct events (Zoom, Resize), return immediately
+		ElseIf $iCurrentStatus >= $iWaitMessage And $iWaitMessage = $NETWEBVIEW2_MESSAGE__TITLE_CHANGED Then ; checking events
+			; RULE 5: checking browser ReadyState
+			If __NetWebView2_WaitForReadyState($oWebV2M, $hTimer, $iTimeOut_ms) Then
 				Return True
 			EndIf
 		EndIf
 
-		; RULE 3: Timeout check
+		; RULE 6: finall Timeout check
 		If $iTimeOut_ms And TimerDiff($hTimer) > $iTimeOut_ms Then
-			Return SetError(4, $iCurrentStatus, False)
+			Return SetError(7, $iCurrentStatus, False)
 		EndIf
+
 	WEnd
 EndFunc   ;==>_NetWebView2_LoadWait
 
@@ -484,7 +546,7 @@ Func _NetWebView2_Navigate($oWebV2M, $s_URL, $iWaitMessage = $NETWEBVIEW2_MESSAG
 	#forceref $oMyError
 
 	; 1. Parameter Validation
-	If $iWaitMessage < $NETWEBVIEW2_MESSAGE__INIT_READY Or $iWaitMessage > $NETWEBVIEW2_MESSAGE__NAV_ERROR Then
+	If $iWaitMessage < $NETWEBVIEW2_MESSAGE__INIT_READY Or $iWaitMessage > $NETWEBVIEW2_MESSAGE__TITLE_CHANGED Then ; higher messsages are not for NAVIGATION thus not checking in _NetWebView2_LoadWait()
 		Return SetError(1, 0, False)
 	EndIf
 
@@ -529,7 +591,7 @@ Func _NetWebView2_NavigateToString($oWebV2M, $s_HTML, $iWaitMessage = $NETWEBVIE
 
 	If $iWaitMessage < $NETWEBVIEW2_MESSAGE__INIT_READY Then
 		Return SetError(1)
-	ElseIf $iWaitMessage > $NETWEBVIEW2_MESSAGE__NAV_ERROR Then ; higher messsages are not for NAVIGATION thus not checking in _NetWebView2_LoadWait()
+	ElseIf $iWaitMessage > $NETWEBVIEW2_MESSAGE__TITLE_CHANGED Then ; higher messsages are not for NAVIGATION thus not checking in _NetWebView2_LoadWait()
 		Return SetError(2)
 	Else
 		Local $iNavigation = $oWebV2M.NavigateToString($s_HTML)
@@ -583,29 +645,6 @@ Func _NetWebView2_BrowserSetupWrapper($hOuterParentWindow, ByRef $oOuterWeb, $sE
 EndFunc   ;==>_NetWebView2_BrowserSetupWrapper
 
 ; #FUNCTION# ====================================================================================================================
-; Name ..........: _NetWebView2_GetSource
-; Description ...:
-; Syntax ........: _NetWebView2_GetSource($oWebV2M)
-; Parameters ....: $oWebV2M             - an object.
-; Return values .: None
-; Author ........: mLipok
-; Modified ......:
-; Remarks .......:
-; Related .......:
-; Link ..........:
-; Example .......: No
-; ===============================================================================================================================
-Func _NetWebView2_GetSource($oWebV2M)
-	Local Const $s_Prefix = "[_NetWebView2_GetSource]:"
-	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc) ; Local COM Error Handler
-	#forceref $oMyError
-
-	Local $sSource = $oWebV2M.GetSource()
-	If @error Then __NetWebView2_Log(@ScriptLineNumber, $s_Prefix, 1)
-	Return SetError(@error, @extended, $sSource)
-EndFunc   ;==>_NetWebView2_GetSource
-
-; #FUNCTION# ====================================================================================================================
 ; Name ..........: _NetWebView2_ExportPageData
 ; Description ...:
 ; Syntax ........: _NetWebView2_ExportPageData($oWebV2M, $iFormat[, $sFilePath = ''])
@@ -632,6 +671,49 @@ Func _NetWebView2_ExportPageData($oWebV2M, $iFormat, $sFilePath = '')
 	__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & " RESULT:" & ((@error) ? ($s_Result) : ("SUCCESS")), 1)
 	Return SetError(@error, @extended, $s_Result)
 EndFunc   ;==>_NetWebView2_ExportPageData
+
+; #FUNCTION# ====================================================================================================================
+; Name ..........: _NetWebView2_GetSource
+; Description ...:
+; Syntax ........: _NetWebView2_GetSource($oWebV2M)
+; Parameters ....: $oWebV2M             - an object.
+; Return values .: None
+; Author ........: mLipok
+; Modified ......:
+; Remarks .......:
+; Related .......:
+; Link ..........:
+; Example .......: No
+; ===============================================================================================================================
+Func _NetWebView2_GetSource($oWebV2M)
+	Local Const $s_Prefix = "[_NetWebView2_GetSource]:"
+	Local $oMyError = ObjEvent("AutoIt.Error", __NetWebView2_COMErrFunc) ; Local COM Error Handler
+	#forceref $oMyError
+
+	Local $sSource = $oWebV2M.GetSource()
+	If @error Then __NetWebView2_Log(@ScriptLineNumber, $s_Prefix, 1)
+	Return SetError(@error, @extended, $sSource)
+EndFunc   ;==>_NetWebView2_GetSource
+
+Func _NetWebView2_NavigateToPDF($oWebV2M, $s_URL_or_FileFullPath, Const $s_Parameters = '', Const $iSleep_ms = 1000, Const $bFreeze = True)
+	If FileExists($s_URL_or_FileFullPath) Then
+		$s_URL_or_FileFullPath = StringReplace($s_URL_or_FileFullPath, '\', '/')
+		$s_URL_or_FileFullPath = StringReplace($s_URL_or_FileFullPath, ' ', '%20')
+		$s_URL_or_FileFullPath = "file:///" & $s_URL_or_FileFullPath
+	EndIf
+
+	If $s_Parameters Then
+		$s_URL_or_FileFullPath &= $s_Parameters
+		#TIP: FitToPage: https://stackoverflow.com/questions/78820187/how-to-change-webview2-fit-to-page-button-on-pdf-toolbar-default-to-fit-to-width#comment138971950_78821231
+		#TIP: Open desired PAGE: https://stackoverflow.com/questions/68500164/cycle-pdf-pages-in-wpf-webview2#comment135402565_68566860
+	EndIf
+
+	Local $idPic = 0
+	If $bFreeze Then __NetWebView2_freezer($oWebV2M, $idPic)
+	_NetWebView2_Navigate($oWebV2M, $s_URL_or_FileFullPath)
+	Sleep($iSleep_ms)
+	If $bFreeze And $idPic Then __NetWebView2_freezer($oWebV2M, $idPic)
+EndFunc   ;==>_NetWebView2_NavigateToPDF
 
 ; #FUNCTION# ====================================================================================================================
 ; Name ..........: _NetWebView2_PrintToPdfStream
@@ -665,6 +747,7 @@ Func _NetWebView2_PrintToPdfStream($oWebV2M, $b_TBinary_FBase64)
 	__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & " RESULT:" & ((@error) ? ($s_Result) : ("SUCCESS")), 1)
 	Return SetError(@error, @extended, $s_Result)
 EndFunc   ;==>_NetWebView2_PrintToPdfStream
+
 #EndRegion ; NetWebView2Lib UDF - _NetWebView2_* helper functions
 
 #Region ; New Core Method Wrappers
@@ -1136,6 +1219,75 @@ Func __Get_Core_Bridge_JS()
 			"})();"
 	Return $sJS
 EndFunc   ;==>__Get_Core_Bridge_JS
+
+; #INTERNAL_USE_ONLY# ===========================================================================================================
+; Name ..........: __NetWebView2_freezer
+; Description ...: freez/unfreeze $oWebV2M
+; Syntax ........: __NetWebView2_freezer($oWebV2M, ByRef $idPic)
+; Parameters ....: $oWebV2M             - an object.
+;                  $idPic               - [in/out] an integer value.
+; Return values .: None
+; Author ........: mLipok
+; Modified ......:
+; Remarks .......:
+; Related .......:
+; Link ..........:
+; Example .......: No
+; ===============================================================================================================================
+Func __NetWebView2_freezer($oWebV2M, ByRef $idPic)
+	Local $hWebView2_Window = WinGetHandle($oWebV2M.BrowserWindowHandle)
+	#Region ; if $idPic is given then it means you already have it and want to delete it - unfreeze - show WebView2 content
+	If $idPic Then
+		_SendMessage($hWebView2_Window, $WM_SETREDRAW, True, 0) ; Enables
+		_WinAPI_RedrawWindow($hWebView2_Window, 0, 0, BitOR($RDW_FRAME, $RDW_INVALIDATE, $RDW_ALLCHILDREN))  ; Repaints
+		GUICtrlDelete($idPic)
+		$idPic = 0
+		Return
+	EndIf
+	#EndRegion ; if $idPic is given then it means you already have it and want to delete it - unfreeze - show WebView2 content
+
+	#Region ; freeze $hWebView2_Window
+
+	#Region ; add PIC to parent window
+	Local $hMainGUI_Window = _WinAPI_GetWindow($hWebView2_Window, $GW_HWNDPREV)
+	Local $aPos = WinGetPos($hWebView2_Window)
+;~ 	_ArrayDisplay($aPos, '$aPos ' & @ScriptLineNumber)
+	Local $hPrev = GUISwitch($hMainGUI_Window)
+	$idPic = GUICtrlCreatePic('', 0, 0, $aPos[2], $aPos[3])
+	Local $hPic = GUICtrlGetHandle($idPic)
+	GUISwitch($hPrev)
+	#EndRegion ; add PIC to parent window
+
+	; Create bitmap
+	Local $hDC = _WinAPI_GetDC($hPic)
+	Local $hDestDC = _WinAPI_CreateCompatibleDC($hDC)
+	Local $hBitmap = _WinAPI_CreateCompatibleBitmap($hDC, $aPos[2], $aPos[3])
+	Local $hDestSv = _WinAPI_SelectObject($hDestDC, $hBitmap)
+	Local $hSrcDC = _WinAPI_CreateCompatibleDC($hDC)
+	Local $hBmp = _WinAPI_CreateCompatibleBitmap($hDC, $aPos[2], $aPos[3])
+	Local $hSrcSv = _WinAPI_SelectObject($hSrcDC, $hBmp)
+	_WinAPI_PrintWindow($hWebView2_Window, $hSrcDC, 2)
+	_WinAPI_BitBlt($hDestDC, 0, 0, $aPos[2], $aPos[3], $hSrcDC, 0, 0, $MERGECOPY)
+
+	_WinAPI_ReleaseDC($hPic, $hDC)
+	_WinAPI_SelectObject($hDestDC, $hDestSv)
+	_WinAPI_SelectObject($hSrcDC, $hSrcSv)
+	_WinAPI_DeleteDC($hDestDC)
+	_WinAPI_DeleteDC($hSrcDC)
+	_WinAPI_DeleteObject($hBmp)
+
+	; Set bitmap to control
+	_SendMessage($hPic, $STM_SETIMAGE, 0, $hBitmap)
+	Local $hObj = _SendMessage($hPic, $STM_GETIMAGE)
+	If $hObj <> $hBitmap Then
+		_WinAPI_DeleteObject($hBitmap)
+	EndIf
+
+	_SendMessage($hWebView2_Window, $WM_SETREDRAW, False, 0) ; Disables ; https://www.autoitscript.com/forum/topic/199172-disable-gui-updating-repainting/
+	Return $idPic
+	#EndRegion ; freeze $hWebView2_Window
+EndFunc   ;==>__NetWebView2_freezer
+
 #EndRegion ; NetWebView2Lib UDF - #INTERNAL_USE_ONLY#
 
 #Region ; NetWebView2Lib UDF - === EVENT HANDLERS ===
@@ -1805,7 +1957,7 @@ EndFunc   ;==>__NetWebView2_Events__OnProcessFailed
 
 ; #INTERNAL_USE_ONLY# ===========================================================================================================
 ; Name ..........: __NetWebView2_Events__OnBasicAuthenticationRequested
-; Description ...: event is raised when WebView encounters a Basic HTTP Authentication request as described in https://developer.mozilla.org/docs/Web/HTTP/Authentication, a Digest HTTP Authentication request as described in https://developer.mozilla.org/docs/Web/HTTP/Headers/Authorization#digest, an NTLM authentication or a Proxy Authentication request.
+; Description ...:  event is raised when WebView encounters a Basic HTTP Authentication request as described in https://developer.mozilla.org/docs/Web/HTTP/Authentication, a Digest HTTP Authentication request as described in https://developer.mozilla.org/docs/Web/HTTP/Headers/Authorization#digest, an NTLM authentication or a Proxy Authentication request.
 ; Syntax ........: __NetWebView2_Events__OnBasicAuthenticationRequested($oWebV2M, $hGUI, $oArgs)
 ; Parameters ....: $oWebV2M             - an object.
 ;                  $hGUI                - a handle value.
