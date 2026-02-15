@@ -63,11 +63,11 @@ Func _Example()
 
 	#Region ; now we can call the script directly from the JavaScript library "NetWebView2Lib_pdfjs_Tools.js" - some pdfjs magic stuff ;)
 	Local $s_JavaScript_snipp = ''
+	Local $s_PDF_TEXT = ''
 
 	$s_JavaScript_snipp = "PDF_ExtractToJSON();"
-	_NetWebView2_ExecuteScript($oWeb, $s_JavaScript_snipp, $NETWEBVIEW2_EXECUTEJS_MODE0_FIREANDFORGET)
-	Sleep(500) ; mLipok #TODO we should avoid Sleep() here
-	MsgBox($MB_TOPMOST, "TEST #" & @ScriptLineNumber, "After:" & @CRLF & $s_JavaScript_snipp)
+	$s_PDF_TEXT = _NetWebView2_ExecuteScript($oWeb, $s_JavaScript_snipp, $NETWEBVIEW2_EXECUTEJS_MODE2_RESULT)
+	MsgBox($MB_TOPMOST, "TEST #" & @ScriptLineNumber, "After:" & @CRLF & $s_JavaScript_snipp & @CRLF & $s_PDF_TEXT)
 
 	$s_JavaScript_snipp = "PDF_HighlightSpansContainingText('2016', 'blue', 'pink');"
 	_NetWebView2_ExecuteScript($oWeb, $s_JavaScript_snipp, $NETWEBVIEW2_EXECUTEJS_MODE0_FIREANDFORGET)
