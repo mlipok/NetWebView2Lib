@@ -130,15 +130,18 @@ IWebViewActions interface (Standardized & Compatibility Layers):
 #### 🩺Verbose Diagnostic Mode
 
 A new `Verbose` property was added to allow real-time diagnostic logging to the SciTE console (or any stdout listener).
+The diagnostic logs use a distinctive prefix and include the instance handle for easier filtering in multi-window applications.
 
 ```autoit
 $oWebV2M.Verbose = True ; Enable diagnostic logging
 ```
 
 When enabled, the console will show entries like: 
-`[NetWebView2Lib][14:20:33.456] Initialize request: parent=[HANDLE:0x...], x=0, y=0, w=1024, h=768` 
-`[NetWebView2Lib][14:20:34.123] WebView2 Initialized successfully.` 
-`[NetWebView2Lib][14:20:35.789] Navigate: https://www.google.com`
+`+++[NetWebView2Lib][HANDLE:0x...][HH:mm:ss.fff] Message`
+
+`+++[NetWebView2Lib][HANDLE:0x004F1128][14:20:33.456] Initialize request: parent=[HANDLE:0x...], x=0, y=0, w=1024, h=768` 
+`+++[NetWebView2Lib][HANDLE:0x004F1128][14:20:34.123] WebView2 Initialized successfully.` 
+`+++[NetWebView2Lib][HANDLE:0x004F1128][14:20:35.789] Navigate: https://www.google.com`
 
 #### 🔄 Backward Compatibility (Legacy ProgIDs)
 
