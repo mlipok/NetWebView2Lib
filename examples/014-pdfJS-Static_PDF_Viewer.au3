@@ -1,5 +1,3 @@
-#WIP - this Example is imported from 1.5.0 UDF - and is in "WORK IN PROGRESS" state
-
 #AutoIt3Wrapper_UseX64=n
 #AutoIt3Wrapper_Run_AU3Check=Y
 #AutoIt3Wrapper_AU3Check_Stop_OnWarning=y
@@ -19,6 +17,8 @@
 #include <GUIConstantsEx.au3>
 #include <WindowsConstants.au3>
 #include "..\NetWebView2Lib.au3"
+#include <Array.au3>
+#include <String.au3>
 
 ; Global objects
 
@@ -66,7 +66,52 @@ Func _Example()
 	Local $s_PDF_TEXT = ''
 
 	$s_JavaScript_snipp = "PDF_ExtractToJSON();"
-	$s_PDF_TEXT = _NetWebView2_ExecuteScript($oWeb, $s_JavaScript_snipp, $NETWEBVIEW2_EXECUTEJS_MODE2_RESULT)
+	_NetWebView2_ExecuteScript($oWeb, $s_JavaScript_snipp, $NETWEBVIEW2_EXECUTEJS_MODE2_RESULT)
+
+	; Get JSON data
+	$s_PDF_TEXT = Get_Data_Sync("", "PDF_DATA_PACKAGE")
+
+	If $s_PDF_TEXT <> "" Then ; === JSON REPORT ===
+		Local $oJson = _NetJson_CreateParser($s_PDF_TEXT)
+		If @error Then Return ConsoleWrite("!> Error: Failed to create NetJson object." & @CRLF)
+
+		ConsoleWrite(@CRLF & "==================== PDF REPORT ====================" & @CRLF)
+
+		; METADATA SECTION
+		Local $sTitle = $oJson.GetTokenValue("metadata.Title")
+		Local $sAuthor = $oJson.GetTokenValue("metadata.Author")
+		ConsoleWrite(StringFormat("+ Title:  %s\n+ Author: %s\n", $sTitle, $sAuthor))
+		ConsoleWrite("+ Format: " & $oJson.GetTokenValue("metadata.PDFFormatVersion") & @CRLF)
+
+		; PAGES SECTION
+;~ 		Local $iActualPages = $oJson.GetArrayLength("pages")
+		Local $iPages = Number($oJson.GetTokenValue("pagesCount"))
+		ConsoleWrite("----------------------------------------------------" & @CRLF)
+		ConsoleWrite("- Total Pages Detected: " & $iPages & @CRLF)
+
+		For $i = 0 To $iPages - 1 ; Get and Clean Page Text
+			Local $sRawPageText = $oJson.GetTokenValue("pages[" & $i & "].text")
+			Local $sCleanText = StringReplace($sRawPageText, Chr(160), " ") ; Normalize spaces
+			ConsoleWrite(StringFormat(">>> Page [%d] Content:\n%s\n", $i + 1, $sCleanText))
+			ConsoleWrite("----------------------------------------------------" & @CRLF)
+		Next
+
+		; DATA GRID SECTION
+		Local $sTable = $oJson.FlattenToTable("↲", @CRLF)
+		Local $aFinalGrid = _ArrayFromString($sTable, "↲", @CRLF, True)
+
+		If Not @error Then
+			ConsoleWrite("+ Data Grid: Success. Displaying UI Table..." & @CRLF)
+			_ArrayDisplay($aFinalGrid, "v1.4.1 Final Table View")
+		Else
+			ConsoleWrite("!> Error: FlattenToTable failed to generate array." & @CRLF)
+		EndIf
+
+		ConsoleWrite("====================================================" & @CRLF & @CRLF)
+	Else
+		ConsoleWrite("!> Error: No PDF data received within timeout." & @CRLF)
+	EndIf
+
 	MsgBox($MB_TOPMOST, "TEST #" & @ScriptLineNumber, "After:" & @CRLF & $s_JavaScript_snipp & @CRLF & $s_PDF_TEXT)
 
 	$s_JavaScript_snipp = "PDF_HighlightSpansContainingText('2016', 'blue', 'pink');"
@@ -108,10 +153,9 @@ Func __UserEventHandler__Bridge_OnMessageReceived($oWebV2M, $hGUI, $sMsg)
 
 	If $sFirstChar = "{" Or $sFirstChar = "[" Then ; 1. JSON Messaging
 		ConsoleWrite("+> : Processing JSON Messaging..." & @CRLF)
-		Local $oJson = ObjCreate("NetJson.Parser")
-		If ObjName($oJson, $OBJ_PROGID) <> 'NetWebView2.Manager' Then Return ConsoleWrite("!> Error: Failed to create NetJson object." & @CRLF)
+		Local $oJson = _NetJson_CreateParser($sMsg)
+		If @error Then Return ConsoleWrite("!> Error: Failed to create NetJson object." & @CRLF)
 
-		$oJson.Parse($sMsg)
 		Local $sJobType = $oJson.GetTokenValue("type")
 
 		Switch $sJobType
@@ -119,13 +163,7 @@ Func __UserEventHandler__Bridge_OnMessageReceived($oWebV2M, $hGUI, $sMsg)
 				ConsoleWrite("- COM_TEST Confirmed: " & $oJson.GetTokenValue("status") & @CRLF)
 
 			Case "PDF_DATA_PACKAGE"
-				ConsoleWrite("> PDF Metadata: " & $oJson.GetTokenValue("metadata.title") & " by " & $oJson.GetTokenValue("metadata.author") & @CRLF)
-
-				; Loop through pages (if your parser supports it)
-				Local $iPages = $oJson.GetTokenValue("metadata.pagesCount")
-				For $i = 0 To $iPages - 1
-					ConsoleWrite("- Page " & ($i + 1) & " content: " & StringLeft($oJson.GetTokenValue("pages[" & $i & "].text"), 150) & "..." & @CRLF)
-				Next
+				Get_Data_Sync($sMsg, "PDF_DATA_PACKAGE")
 		EndSwitch
 
 	Else ; 2. Legacy / Native Pipe-Delimited Messaging
@@ -153,6 +191,28 @@ Func __UserEventHandler__Bridge_OnMessageReceived($oWebV2M, $hGUI, $sMsg)
 		EndSwitch
 	EndIf
 EndFunc   ;==>__UserEventHandler__Bridge_OnMessageReceived
+
+Func Get_Data_Sync($sData = "", $sJobType = "DEFAULT", $iTimeout = 5000)
+	; We use a Map to hold many different types of data at the same time.
+	Local Static $mDataMap[]
+
+	; If we send data (from the Event Handler)
+	If $sData <> "" Then
+		$mDataMap[$sJobType] = $sData
+		Return True
+	EndIf
+
+	; If we request data (from the main Script)
+	Local $iStart = TimerInit()
+	While Not MapExists($mDataMap, $sJobType)
+		If TimerDiff($iStart) > $iTimeout Then Return SetError(1, 0, "")
+		Sleep(10)
+	WEnd
+
+	Local $sResult = $mDataMap[$sJobType]
+	MapRemove($mDataMap, $sJobType) ; Cleaning for next time
+	Return $sResult
+EndFunc   ;==>Get_Data_Sync
 
 Func __SetupStaticPDF(ByRef $oWeb, $s_PDF_Path, $sExpectedTitle, $bBlockLinks = False, $bBlockSelection = False, $bShowToolbar = False)
 	; 🏆 https://mozilla.github.io/pdf.js/
@@ -230,17 +290,17 @@ Func __SetupStaticPDF(ByRef $oWeb, $s_PDF_Path, $sExpectedTitle, $bBlockLinks = 
 
 	$oWeb.AddInitializationScript($sCleanupJS)
 
-	; Fix slashes in Path for URL
-	Local $s_PDF_URL = StringReplace($s_PDF_Path, "\", "/")
-	$s_PDF_URL = $oWeb.EncodeURI($s_PDF_URL)
-	Local $s_PDF_JS_URL = StringReplace(@ScriptDir & "\JS_Lib\pdfjs\web\viewer.html" & "?file=", "\", "/")
-	Local $s_Viewer_URL = "file:///" & $s_PDF_JS_URL & $s_PDF_URL
-	ConsoleWrite("- $s_Viewer_URL= " & $s_Viewer_URL & @CRLF)
 
-	_NetWebView2_Navigate($oWeb, $s_Viewer_URL, $NETWEBVIEW2_MESSAGE__TITLE_CHANGED, $sExpectedTitle, 5000)
+	; Fix slashes in Path for URL
+	Local $sViewerPath = StringReplace(@ScriptDir & "\JS_Lib\pdfjs\web\viewer.html", "\", "/")
+	Local $sPDF_URL = "file:///" & StringReplace($s_PDF_Path, "\", "/")
+	Local $sFinalURL = "file:///" & $sViewerPath & "?file=" & $oWeb.EncodeURI($sPDF_URL)
+	ConsoleWrite("Correct URL: " & $sFinalURL & @CRLF)
+
+	_NetWebView2_Navigate($oWeb, $sFinalURL, $NETWEBVIEW2_MESSAGE__TITLE_CHANGED, $sExpectedTitle, 5000)
 	ConsoleWrite("! we're done with navigation, but check how many more messages there are below. SLN=" & @ScriptLineNumber & @CRLF)
 	MsgBox($MB_TOPMOST, "TEST #" & @ScriptLineNumber, 'Wait for all messages to full loading PDF by pdf.js')
-	#EndRegion ; mLipok #TODO this should be fixed by better LoadWait, I mean adding a check if the desired title appears
+	; mLipok #TODO this should be fixed by better LoadWait, I mean adding a check if the desired title appears
 
 	; $oWeb.IsZoomControlEnabled = False ; <--- It doesn't work in PDF.
 	$oWeb.DisableBrowserFeatures()
