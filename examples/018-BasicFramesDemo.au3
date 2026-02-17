@@ -55,6 +55,8 @@ Func Main()
 	If @error Then Return SetError(@error, @extended)
 
 	#Region ; Example part 1 - testing NetWebView2Lib new methodes: .GetFrameCount() .GetFrameUrl($IDX_Frame) .GetFrameName($IDX_Frame)
+	ConsoleWrite("+ Example part 1 - testing NetWebView2Lib new methodes: .GetFrameCount() .GetFrameUrl($IDX_Frame) .GetFrameName($IDX_Frame)" & @CRLF)
+
 	Local $iFrameCount = $oWebV2M.GetFrameCount()
 	ConsoleWrite(@CRLF)
 	ConsoleWrite("! " & @ScriptLineNumber & " : Frames=" & $iFrameCount & @CRLF)
@@ -66,12 +68,15 @@ Func Main()
 	Next
 	#EndRegion ; Example part 1 - testing NetWebView2Lib new methodes: .GetFrameCount() .GetFrameUrl($IDX_Frame) .GetFrameName($IDX_Frame)
 
-	#Region ; Example part 2 - testing NetWebView2Lib new methodes .GetFrameUrls() .GetFrameNames()
+	#Region ; Example part 2 - testing NetWebView2Lib new methodes: .GetFrameCount() .GetFrameUrl($IDX_Frame) .GetFrameName($IDX_Frame)
+	ConsoleWrite("+ Example part 1 - testing NetWebView2Lib new methodes: .GetFrameCount() .GetFrameUrl($IDX_Frame) .GetFrameName($IDX_Frame)" & @CRLF)
+
 	ConsoleWrite("! " & @ScriptLineNumber & " : GetFrameUrls() :" & @CRLF & $oWebV2M.GetFrameUrls() & @CRLF)
 	ConsoleWrite("! " & @ScriptLineNumber & " : GetFrameNames() :" & @CRLF & $oWebV2M.GetFrameNames() & @CRLF)
 	#EndRegion ; Example part 2 - testing NetWebView2Lib new methodes .GetFrameUrls() .GetFrameNames()
 
 	#Region ; Example part 3 - testing NetWebView2Lib new methodes .GetFrameHtmlSource($IDX_Frame)
+	ConsoleWrite("+ Example part 3 - testing NetWebView2Lib new methodes .GetFrameHtmlSource($IDX_Frame)" & @CRLF)
 	For $IDX_Frame = 0 To $iFrameCount - 1
 		ConsoleWrite(@CRLF & "======================================================" & @CRLF)
 		ConsoleWrite("! " & @ScriptLineNumber & " : GetFrameHtmlSource(" & $IDX_Frame & ") :" & @CRLF & $oWebV2M.GetFrameHtmlSource($IDX_Frame) & @CRLF)
