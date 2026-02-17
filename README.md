@@ -62,6 +62,8 @@ This project is provided "as-is". You are free to use, modify, and distribute it
 <p align="center">
   <img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" width="100%">
 </p>
+
+
 ## 🚀 What's New in v2.0.0-stable - Professional Naming & Absolute Stability
 
 This stable release marks the transition to a professional, standardized COM architecture and introduces high-performance infrastructure for production-grade applications.
