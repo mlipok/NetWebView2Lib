@@ -69,7 +69,7 @@ Func Main()
 	#EndRegion ; Example part 1 - testing NetWebView2Lib new methodes: .GetFrameCount() .GetFrameUrl($IDX_Frame) .GetFrameName($IDX_Frame)
 
 	#Region ; Example part 2 - testing NetWebView2Lib new methodes: .GetFrameCount() .GetFrameUrl($IDX_Frame) .GetFrameName($IDX_Frame)
-	ConsoleWrite("+ Example part 1 - testing NetWebView2Lib new methodes: .GetFrameCount() .GetFrameUrl($IDX_Frame) .GetFrameName($IDX_Frame)" & @CRLF)
+	ConsoleWrite("+ Example part 2 - testing NetWebView2Lib new methodes: .GetFrameCount() .GetFrameUrl($IDX_Frame) .GetFrameName($IDX_Frame)" & @CRLF)
 
 	ConsoleWrite("! " & @ScriptLineNumber & " : GetFrameUrls() :" & @CRLF & $oWebV2M.GetFrameUrls() & @CRLF)
 	ConsoleWrite("! " & @ScriptLineNumber & " : GetFrameNames() :" & @CRLF & $oWebV2M.GetFrameNames() & @CRLF)
