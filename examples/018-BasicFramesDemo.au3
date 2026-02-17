@@ -2,9 +2,9 @@
 #AutoIt3Wrapper_UseX64=y
 #AutoIt3Wrapper_Run_AU3Check=Y
 #AutoIt3Wrapper_AU3Check_Stop_OnWarning=y
-;~ #AutoIt3Wrapper_AU3Check_Parameters=-d -w 1 -w 2 -w 3 -w 4 -w 5 -w 6 -w 7
+#AutoIt3Wrapper_AU3Check_Parameters=-d -w 1 -w 2 -w 3 -w 4 -w 5 -w 6 -w 7
 
-; 001-BasicDemo.au3
+; 018-BasicFramesDemo.au3
 
 #include <GUIConstantsEx.au3>
 #include <WindowsConstants.au3>
@@ -49,6 +49,7 @@ Func Main()
 
 	#COMMENT This example is based on ==> ;	https://github.com/Danp2/au3WebDriver/blob/1834e95206bd4a6ef6952c47a1f1192042f98c0b/wd_demo.au3#L588-L732
 	#Region - Testing how to manage frames
+
 	_NetWebView2_Navigate($oWebV2M, 'https://www.w3schools.com/tags/tryit.asp?filename=tryhtml_iframe', $NETWEBVIEW2_MESSAGE__TITLE_CHANGED, "", 5000)
 	MsgBox($MB_TOPMOST, "TEST #" & @ScriptLineNumber, 1)
 ;~ 	_Demo_NavigateCheckBanner($sSession, "https://www.w3schools.com/tags/tryit.asp?filename=tryhtml_iframe", '//*[@id="snigel-cmp-framework" and @class="snigel-cmp-framework"]')
@@ -73,7 +74,7 @@ Func Main()
 
 	ConsoleWrite("! " & @ScriptLineNumber & " : GetFrameUrls() :" & @CRLF & $oWebV2M.GetFrameUrls() & @CRLF)
 	ConsoleWrite("! " & @ScriptLineNumber & " : GetFrameNames() :" & @CRLF & $oWebV2M.GetFrameNames() & @CRLF)
-	#EndRegion ; Example part 2 - testing NetWebView2Lib new methodes .GetFrameUrls() .GetFrameNames()
+	#EndRegion ; Example part 2 - testing NetWebView2Lib new methodes: .GetFrameCount() .GetFrameUrl($IDX_Frame) .GetFrameName($IDX_Frame)
 
 	#Region ; Example part 3 - testing NetWebView2Lib new methodes .GetFrameHtmlSource($IDX_Frame)
 	ConsoleWrite("+ Example part 3 - testing NetWebView2Lib new methodes .GetFrameHtmlSource($IDX_Frame)" & @CRLF)
@@ -84,7 +85,8 @@ Func Main()
 	ConsoleWrite(@CRLF & "======================================================" & @CRLF)
 	ConsoleWrite(@CRLF)
 	ConsoleWrite(@CRLF)
-	#Region ; Example part 1 - testing NetWebView2Lib new methodes
+	#EndRegion ; Example part 3 - testing NetWebView2Lib new methodes .GetFrameHtmlSource($IDX_Frame)
+
 
 #cs NOT SUPPORTED YET
 	Local $oFrame0 = $oWebV2M.GetFrame(0)
@@ -125,7 +127,7 @@ Func Main()
 	If @error Then Return SetError(@error, @extended)
 #CE
 
-	#EndRegion ; Example part 1 - testing NetWebView2Lib new methodes
+	#EndRegion - Testing how to manage frames
 
 #CS
 
