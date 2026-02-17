@@ -54,7 +54,6 @@ https://www.autoitscript.com/forum/topic/213375-webview2autoit-autoit-webview2-c
 
 
 ---
-
 ### ⚖️ License
 
 This project is provided "as-is". You are free to use, modify, and distribute it for both personal and commercial projects.
@@ -63,8 +62,6 @@ This project is provided "as-is". You are free to use, modify, and distribute it
 <p align="center">
   <img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" width="100%">
 </p>
-
-
 ## 🚀 What's New in v2.0.0-stable - Professional Naming & Absolute Stability
 
 This stable release marks the transition to a professional, standardized COM architecture and introduces high-performance infrastructure for production-grade applications.
@@ -98,7 +95,6 @@ A redesigned diagnostic system for easier debugging of complex workflows.
 Bulk extraction methods (`GetFrameUrls`, `GetFrameNames`) allow for high-speed metadata retrieval from complex multi-frame layouts, essential for advanced web scraping.
 
 --- 
-
 #### 🖼️ IFrame HTML Extraction 
 
 We implemented a robust system to track and extract HTML from iframes, including cross-origin ones.
@@ -147,11 +143,11 @@ When enabled, the console will show entries like: 
 
 To ensure stability for existing scripts not using the UDF, the following legacy ProgIDs are still supported through a compatibility layer:
 
-| Legacy Object | Legacy ProgID | v2.0 Standardized ProgID |
-| :--- | :--- | :--- |
-| `WebViewManager` | `NetWebView2.Manager` | `NetWebView2Lib.WebView2Manager` |
-| `WebViewBridge` | `NetWebView2Lib.WebViewBridge` | `NetWebView2Lib.WebView2Bridge` |
-| `JsonParser` | `NetJson.Parser` | `NetWebView2Lib.WebView2Parser` |
+| Legacy Object    | Legacy ProgID                  | v2.0 Standardized ProgID         |
+| :--------------- | :----------------------------- | :------------------------------- |
+| `WebViewManager` | `NetWebView2.Manager`          | `NetWebView2Lib.WebView2Manager` |
+| `WebViewBridge`  | `NetWebView2Lib.WebViewBridge` | `NetWebView2Lib.WebView2Bridge`  |
+| `JsonParser`     | `NetJson.Parser`               | `NetWebView2Lib.WebView2Parser`  |
 
 > [!NOTE]
 > Objects created with legacy ProgIDs will function exactly the same but will report their legacy class names via `ObjName()`.
@@ -161,7 +157,6 @@ To ensure stability for existing scripts not using the UDF, the following legacy
 <p align="center">
   <img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" width="100%">
 </p>
-
 
 ## 📖 NetWebView2Lib Version 2.0.0-stable (Quick Reference)
 
