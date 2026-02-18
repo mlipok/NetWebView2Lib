@@ -2186,3 +2186,4 @@ EndFunc   ;==>__NetWebView2_Events__OnScreenCaptureStarting
 #EndRegion ; NetWebView2Lib UDF - === EVENT HANDLERS === #TODO
 
 #EndRegion ; NetWebView2Lib UDF - === EVENT HANDLERS ===
+
