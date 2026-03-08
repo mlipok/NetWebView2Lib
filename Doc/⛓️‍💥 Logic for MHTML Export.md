@@ -1,7 +1,7 @@
 
 # Logic for MHTML Export
 
->[!INFO] 
+> [!NOTE]
 > This extra logic is here to handle modern sites with lazy-loading and responsive breakpoints.  
 > For simpler sites, it is not strictly required but highly recommended for consistency.
 
