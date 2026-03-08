@@ -214,6 +214,8 @@ Func _NetWebView2_Initialize($oWebV2M, $hUserGUI, $s_ProfileDirectory, $i_Left =
 	Local $iMessage
 	Do
 		__NetWebView2_Sleep(10)
+		If @error Then Return SetError(@error, @extended, '')
+
 		$iMessage = __NetWebView2_LastMessage_KEEPER($oWebV2M)
 		If $iMessage = $NETWEBVIEW2_MESSAGE__INIT_FAILED _
 				Or $iMessage = $NETWEBVIEW2_MESSAGE__PROFILE_NOT_READY _
@@ -468,8 +470,9 @@ Func _NetWebView2_LoadWait($oWebV2M, $iWaitMessage = $NETWEBVIEW2_MESSAGE__TITLE
 	__NetWebView2_LastMessage_Navigation($oWebV2M, $NETWEBVIEW2_MESSAGE__NONE)
 
 	While 1
-		; Allow AutoIt to "breathe" and process the GUI messages
+		; Allow AutoIt to "breathe" and process the GUI messages, also allow user to abort
 		__NetWebView2_Sleep(10)
+		If @error Then Return SetError(@error, @extended, '')
 
 		; RULE 1: If we reached the target status or higher
 		Local $bWebIsReady = $oWebV2M.IsReady
@@ -721,14 +724,14 @@ EndFunc   ;==>_NetWebView2_GetSource
 ; Name ..........: _NetWebView2_NavigateToPDF
 ; Description ...: Navigate to a PDF (local PDF file or online direct URL link to PDF file)
 ; Syntax ........: _NetWebView2_NavigateToPDF($oWebV2M, $s_URL_or_FilePath[, $s_Parameters = ''[, $iWaitMessage = $NETWEBVIEW2_MESSAGE__TITLE_CHANGED[,
-;                  $sExpectedTitle = ""[, $iTimeOut_ms = 5000[, $iSleep_ms = 1000[, $bFreeze = True]]]]]])
+;                  $sExpectedTitle = ""[, $iTimeOut_ms = 5000[, $iSleepAfter_ms = 1000[, $bFreeze = True]]]]]])
 ; Parameters ....: $oWebV2M             - an object.
 ;                  $s_URL_or_FilePath   - a string value.
 ;                  $s_Parameters        - [optional] a string value. Default is ''.
 ;                  $iWaitMessage        - [optional] an integer value. Default is $NETWEBVIEW2_MESSAGE__TITLE_CHANGED.
 ;                  $sExpectedTitle      - [optional] Expected title to LoadWait for, as StringRegExp() pattern, By Default vaule it will compute the $s_URL_or_FilePath to guess RegExp for the Title
 ;                  $iTimeOut_ms         - [optional] Maximum time to wait in milliseconds. 0 for infinite. Default is 5000ms
-;                  $iSleep_ms           - [optional] an integer value. Default is 1000.
+;                  $iSleepAfter_ms           - [optional] an integer value. Default is 1000.
 ;                  $bFreeze             - [optional] a boolean value. Default is True.
 ; Return values .: None
 ; Author ........: mLipok
@@ -738,7 +741,7 @@ EndFunc   ;==>_NetWebView2_GetSource
 ; Link ..........:
 ; Example .......: No
 ; ===============================================================================================================================
-Func _NetWebView2_NavigateToPDF($oWebV2M, $s_URL_or_FilePath, Const $s_Parameters = '', $iWaitMessage = $NETWEBVIEW2_MESSAGE__TITLE_CHANGED, $sExpectedTitle = Default, $iTimeOut_ms = 5000, Const $iSleep_ms = 1000, Const $bFreeze = True)
+Func _NetWebView2_NavigateToPDF($oWebV2M, $s_URL_or_FilePath, Const $s_Parameters = '', $iWaitMessage = $NETWEBVIEW2_MESSAGE__TITLE_CHANGED, $sExpectedTitle = Default, $iTimeOut_ms = 5000, Const $iSleepAfter_ms = 1000, Const $bFreeze = True)
 	Local Const $s_Prefix = "[_NetWebView2_NavigateToPDF]: URL_or_File:" & $s_URL_or_FilePath ; #TODO suplement
 
 	If (Not IsObj($oWebV2M)) Or ObjName($oWebV2M, $OBJ_PROGID) <> 'NetWebView2Lib.WebView2Manager' Then Return SetError(1, 0, "ERROR: Invalid Object")
@@ -771,7 +774,9 @@ Func _NetWebView2_NavigateToPDF($oWebV2M, $s_URL_or_FilePath, Const $s_Parameter
 	$oWebV2M.LockWebView()
 	If $bFreeze Then __NetWebView2_freezer($oWebV2M, $idPic)
 	_NetWebView2_Navigate($oWebV2M, $s_URL_or_FilePath, $iWaitMessage, $sExpectedTitle, $iTimeOut_ms)
-	If Not @error Then __NetWebView2_Sleep($iSleep_ms)
+	If Not @error Then __NetWebView2_Sleep($iSleepAfter_ms)
+	If @error Then Return SetError(@error, @extended, '')
+
 	__NetWebView2_Log(@ScriptLineNumber, $s_Prefix, 1)
 	If $bFreeze And $idPic Then __NetWebView2_freezer($oWebV2M, $idPic)
 	$oWebV2M.UnLockWebView()
@@ -1118,7 +1123,7 @@ EndFunc   ;==>_NetJson_EncodeB64
 ; ===============================================================================================================================
 Func __NetWebView2_Sleep($iPause)
 	$_g_bNetWebView2_Sleep($iPause)
-	If @error Then Return SetError($NETWEBVIEW2_MESSAGE__USER_ABORT)
+	If @error Then Return SetError($NETWEBVIEW2_MESSAGE__USER_ABORT, @extended)
 EndFunc   ;==>__NetWebView2_Sleep
 
 ; #INTERNAL_USE_ONLY# ===========================================================================================================
@@ -1166,6 +1171,8 @@ Func __NetWebView2_WaitForReadyState($oWebV2M, $hTimer, $iTimeOut_ms = 5000)
 			Return SetError(1, 0, False)
 		EndIf
 		__NetWebView2_Sleep(50)
+		If @error Then Return SetError(@error, @extended, '')
+
 	WEnd
 EndFunc   ;==>__NetWebView2_WaitForReadyState
 
