@@ -62,17 +62,26 @@ Func _Example()
 	#EndRegion ; HTML
 
 	#Region ; MHTML
-	; This trick is because Responsive Design (CSS) stored inside MHTML, and loading="lazy"
-	$oWebV2M.ZoomFactor = 0.5
-	Sleep(500)
-	Local $s_MHTML_content = _NetWebView2_ExportPageData($oWebV2M, 1, "")
-	$oWebV2M.ZoomFactor = 1
+	; # NOTE # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	; This sequence ensures that responsive design (CSS) and lazy-loaded assets
+	; We use Zoom 0.5 to trigger Ultra-Wide assets (>1408px).
+	; Note: This might cause missing assets if the MHTML is viewed in a very small window later,
+	; as the browser only bundles assets active during the current (Wide) session.
+	; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-	Local $s_MHTML_FileFullPath = @ScriptDir & '\5-SaveDemo_result.mhtml'
-	If FileExists($s_MHTML_FileFullPath) Then FileDelete($s_MHTML_FileFullPath)
-	FileWrite($s_MHTML_FileFullPath, $s_MHTML_content)
-	ShellExecute($s_MHTML_FileFullPath)
-	#EndRegion ; MHTML
+	$oWebV2M.ZoomFactor = 0.5
+	_ForceAntiLazy($oWebV2M)
+	Local $s_MHTML_content = _NetWebView2_ExportPageData($oWebV2M, 1, "")
+	$oWebV2M.ZoomFactor = 1.0
+
+    ; Save to file
+    Local $s_MHTML_FileFullPath = @ScriptDir & '\5-SaveDemo_result.mhtml'
+    If FileExists($s_MHTML_FileFullPath) Then FileDelete($s_MHTML_FileFullPath)
+    FileWrite($s_MHTML_FileFullPath, $s_MHTML_content)
+
+    ; Open the result in the default browser (Edge)
+    ShellExecute($s_MHTML_FileFullPath)
+    #EndRegion ; MHTML
 
 	#Region ; GUI Loop
 	; Main Loop
@@ -89,4 +98,30 @@ Func _Example()
 	#EndRegion ; GUI Loop
 
 EndFunc   ;==>_Example
+
+; #FUNCTION# ====================================================================================================================
+; Name ..........: _ForceAntiLazy
+; Description ...: Forces the browser to load all lazy-loaded images and assets before exporting data.
+; Syntax ........: _ForceAntiLazy($oWebV2M)
+; Parameters ....: $oWebV2M - The WebView2 Manager object.
+; Return values .: Returns the result of the JavaScript execution.
+; Author ........: ioa747
+; ===============================================================================================================================
+Func _ForceAntiLazy($oWebV2M)
+    Local $sJS = ""
+    $sJS &= "(function() {" & @CRLF
+    $sJS &= "    document.querySelectorAll('img').forEach(img => {" & @CRLF
+    $sJS &= "        img.setAttribute('loading', 'eager');" & @CRLF
+    $sJS &= "        if (img.dataset.srcset) img.srcset = img.dataset.srcset;" & @CRLF
+    $sJS &= "        if (img.dataset.src) img.src = img.dataset.src;" & @CRLF
+    $sJS &= "    });" & @CRLF
+    $sJS &= "    window.scrollTo(0, document.body.scrollHeight);" & @CRLF
+    $sJS &= "    setTimeout(() => { window.scrollTo(0, 0); }, 150);" & @CRLF
+    $sJS &= "    return 'AntiLazy: Multi-layout triggered.';" & @CRLF
+    $sJS &= "})();"
+
+    Local $sResult = _NetWebView2_ExecuteScript($oWebV2M, $sJS, 2)
+    Sleep(500) ; Slightly more sleep to handle the 1408px transition
+    Return $sResult
+EndFunc
 
