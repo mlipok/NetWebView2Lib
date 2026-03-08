@@ -731,7 +731,7 @@ EndFunc   ;==>_NetWebView2_GetSource
 ;                  $iWaitMessage        - [optional] an integer value. Default is $NETWEBVIEW2_MESSAGE__TITLE_CHANGED.
 ;                  $sExpectedTitle      - [optional] Expected title to LoadWait for, as StringRegExp() pattern, By Default vaule it will compute the $s_URL_or_FilePath to guess RegExp for the Title
 ;                  $iTimeOut_ms         - [optional] Maximum time to wait in milliseconds. 0 for infinite. Default is 5000ms
-;                  $iSleepAfter_ms           - [optional] an integer value. Default is 1000.
+;                  $iSleepAfter_ms      - [optional] an integer value. Default is 1000.
 ;                  $bFreeze             - [optional] a boolean value. Default is True.
 ; Return values .: None
 ; Author ........: mLipok
