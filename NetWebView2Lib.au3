@@ -6,7 +6,7 @@
 
 #Tidy_Parameters=/tcb=-1
 
-; NetWebView2Lib.au3 - Script Version: 2026.3.17.12 🚩
+; NetWebView2Lib.au3 - Script Version: 2026.3.17.22 🚩
 
 #include <Array.au3>
 #include <GUIConstantsEx.au3>
@@ -1498,7 +1498,7 @@ EndFunc   ;==>__NetWebView2_freezer
 
 #EndRegion ; === NetWebView2Lib UDF === #INTERNAL_USE_ONLY#
 
-#Region ; === NetWebView2Lib UDF === EVENT HANDLERS === Collection ===
+#Region ; === NetWebView2Lib UDF === EVENT HANDLERS ***** Collection *****
 
 #Region ; === NetWebView2Lib UDF === EVENT HANDLERS === Error Handlers ===
 ; #INTERNAL_USE_ONLY# ===========================================================================================================
@@ -1628,9 +1628,17 @@ Volatile Func __NetWebView2_Events__OnMessageReceived($oWebV2M, $hGUI, $sMsg)
 			__NetWebView2_LastMessage_KEEPER($oWebV2M, $NETWEBVIEW2_MESSAGE__URL_CHANGED)
 
 		Case "NAV_ERROR"
-			__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & " COMMAND:" & $sCommand, 1)
-			__NetWebView2_LastMessage_KEEPER($oWebV2M, $NETWEBVIEW2_MESSAGE__NAV_ERROR)
-			$oWebV2M.Stop()
+			If $sData = "OperationCanceled" Then ; Check if the error is actually a user cancellation
+				__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & " COMMAND:USER_ABORT (Navigation Canceled)", 1)
+				__NetWebView2_LastMessage_KEEPER($oWebV2M, $NETWEBVIEW2_MESSAGE__USER_ABORT)
+			Else
+				__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & " COMMAND:" & $sCommand & " Data:" & $sData, 1)
+				__NetWebView2_LastMessage_KEEPER($oWebV2M, $NETWEBVIEW2_MESSAGE__NAV_ERROR)
+				$oWebV2M.Stop() ; We only stop if it is a real error.
+			EndIf
+
+			; 🚧 *******************************************
+			ConsoleWrite("> TEST NAV_ERR: " & $sMsg & @CRLF)
 			ConsoleWrite("> TEST NAV_ERR: __NetWebView2_LastMessage_KEEPER($oWebV2M)=" & __NetWebView2_LastMessage_KEEPER($oWebV2M) & " SLN=" & @ScriptLineNumber & @CRLF)
 
 		Case "NAV_COMPLETED"
@@ -1957,7 +1965,7 @@ EndFunc   ;==>__NetWebView2_Events__OnTitleChanged
 ; Modified ......:
 ; Remarks .......:
 ; Related .......:
-; Link ..........:
+; Link ..........: https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2.navigationstarting
 ; Example .......: No
 ; ===============================================================================================================================
 Volatile Func __NetWebView2_Events__OnNavigationStarting($oWebV2M, $hGUI, $oArgs)
@@ -2052,7 +2060,7 @@ EndFunc   ;==>__NetWebView2_Events__OnContextMenu
 ; Modified ......:
 ; Remarks .......:
 ; Related .......:
-; Link ..........: https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2.webresourceresponsereceived?view=webview2-dotnet-1.0.2849.39
+; Link ..........: https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2.webresourceresponsereceived
 ; Example .......: No
 ; ===============================================================================================================================
 Volatile Func __NetWebView2_Events__OnWebResourceResponseReceived($oWebV2M, $hGUI, $iStatusCode, $sReasonPhrase, $sRequestUrl)
@@ -2205,7 +2213,7 @@ EndFunc   ;==>__NetWebView2_Events__OnProcessFailed
 ; Remarks .......: The host can provide a response with credentials for the authentication or cancel the request.
 ;                  If the host sets the Cancel property to false but does not provide either UserName or Password properties on the Response property, then WebView2 will show the default authentication challenge dialog prompt to the user.
 ; Related .......:
-; Link ..........: https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2.basicauthenticationrequested?view=webview2-dotnet-1.0.2903.40
+; Link ..........: https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2.basicauthenticationrequested
 ; Example .......: No
 ; ===============================================================================================================================
 Volatile Func __NetWebView2_Events__OnBasicAuthenticationRequested($oWebV2M, $hGUI, $oArgs)
@@ -2431,4 +2439,4 @@ EndFunc   ;==>__NetWebView2_Events__FrameKeeper
 ;~ EndFunc   ;==>__NetWebView2_Events__OnScreenCaptureStarting
 #EndRegion ; === NetWebView2Lib UDF === EVENT HANDLERS * #TODO ===
 
-#EndRegion ; === NetWebView2Lib UDF === EVENT HANDLERS === Collection ===
+#EndRegion ; === NetWebView2Lib UDF === EVENT HANDLERS ***** Collection *****
