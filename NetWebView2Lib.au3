@@ -6,7 +6,7 @@
 
 #Tidy_Parameters=/tcb=-1
 
-; NetWebView2Lib.au3 - Script Version: 2026.2.25.11 🚩
+; NetWebView2Lib.au3 - Script Version: 2026.3.17.22 🚩
 
 #include <Array.au3>
 #include <GUIConstantsEx.au3>
@@ -29,6 +29,7 @@
 Global $_g_bNetWebView2_DebugInfo = True
 ;~ Global $_g_bNetWebView2_DebugDev = False
 Global $_g_bNetWebView2_DebugDev = (@Compiled = 1)
+Global $_g_bNetWebView2_Sleep = Sleep                  ; Default to calling standard Sleep function
 
 #Region ; === NetWebView2Lib UDF === ENUMS
 
@@ -92,6 +93,7 @@ Global Enum _ ; $NETWEBVIEW2_MESSAGE__* are set by mainly by __NetWebView2_Event
 		$NETWEBVIEW2_MESSAGE__DOWNLOAD_COMPLETED, _
 		$NETWEBVIEW2_MESSAGE__RESPONSE_RECEIVED, _
 		$NETWEBVIEW2_MESSAGE__UNKNOWN_MESSAGE, _
+		$NETWEBVIEW2_MESSAGE__USER_ABORT, _
 		$NETWEBVIEW2_MESSAGE___FAKE_COUNTER
 
 Global Enum _
@@ -211,7 +213,9 @@ Func _NetWebView2_Initialize($oWebV2M, $hUserGUI, $s_ProfileDirectory, $i_Left =
 	Local $iTimeOut_ms = 10000 ; max 10 seconds for initialization
 	Local $iMessage
 	Do
-		Sleep(50)
+		__NetWebView2_Sleep(10)
+		If @error Then Return SetError(@error, @extended, '')
+
 		$iMessage = __NetWebView2_LastMessage_KEEPER($oWebV2M)
 		If $iMessage = $NETWEBVIEW2_MESSAGE__INIT_FAILED _
 				Or $iMessage = $NETWEBVIEW2_MESSAGE__PROFILE_NOT_READY _
@@ -476,8 +480,9 @@ Func _NetWebView2_LoadWait($oWebV2M, $iWaitMessage = $NETWEBVIEW2_MESSAGE__TITLE
 	__NetWebView2_LastMessage_Navigation($oWebV2M, $NETWEBVIEW2_MESSAGE__NONE)
 
 	While 1
-		; Allow AutoIt to "breathe" and process the GUI messages
-		Sleep(10)
+		; Allow AutoIt to "breathe" and process the GUI messages, also allow user to abort
+		__NetWebView2_Sleep(10)
+		If @error Then Return SetError(@error, @extended, '')
 
 		; RULE 1: If we reached the target status or higher
 		Local $bWebIsReady = $oWebV2M.IsReady
@@ -729,14 +734,14 @@ EndFunc   ;==>_NetWebView2_GetSource
 ; Name ..........: _NetWebView2_NavigateToPDF
 ; Description ...: Navigate to a PDF (local PDF file or online direct URL link to PDF file)
 ; Syntax ........: _NetWebView2_NavigateToPDF($oWebV2M, $s_URL_or_FilePath[, $s_Parameters = ''[, $iWaitMessage = $NETWEBVIEW2_MESSAGE__TITLE_CHANGED[,
-;                  $sExpectedTitle = ""[, $iTimeOut_ms = 5000[, $iSleep_ms = 1000[, $bFreeze = True]]]]]])
+;                  $sExpectedTitle = ""[, $iTimeOut_ms = 5000[, $iSleepAfter_ms = 1000[, $bFreeze = True]]]]]])
 ; Parameters ....: $oWebV2M             - an object.
 ;                  $s_URL_or_FilePath   - a string value.
 ;                  $s_Parameters        - [optional] a string value. Default is ''.
 ;                  $iWaitMessage        - [optional] an integer value. Default is $NETWEBVIEW2_MESSAGE__TITLE_CHANGED.
 ;                  $sExpectedTitle      - [optional] Expected title to LoadWait for, as StringRegExp() pattern, By Default vaule it will compute the $s_URL_or_FilePath to guess RegExp for the Title
 ;                  $iTimeOut_ms         - [optional] Maximum time to wait in milliseconds. 0 for infinite. Default is 5000ms
-;                  $iSleep_ms           - [optional] an integer value. Default is 1000.
+;                  $iSleepAfter_ms      - [optional] an integer value. Default is 1000.
 ;                  $bFreeze             - [optional] a boolean value. Default is True.
 ; Return values .: None
 ; Author ........: mLipok
@@ -746,7 +751,7 @@ EndFunc   ;==>_NetWebView2_GetSource
 ; Link ..........:
 ; Example .......: No
 ; ===============================================================================================================================
-Func _NetWebView2_NavigateToPDF($oWebV2M, $s_URL_or_FilePath, Const $s_Parameters = '', $iWaitMessage = $NETWEBVIEW2_MESSAGE__TITLE_CHANGED, $sExpectedTitle = Default, $iTimeOut_ms = 5000, Const $iSleep_ms = 1000, Const $bFreeze = True)
+Func _NetWebView2_NavigateToPDF($oWebV2M, $s_URL_or_FilePath, Const $s_Parameters = '', $iWaitMessage = $NETWEBVIEW2_MESSAGE__TITLE_CHANGED, $sExpectedTitle = Default, $iTimeOut_ms = 5000, Const $iSleepAfter_ms = 1000, Const $bFreeze = True)
 	Local Const $s_Prefix = "[_NetWebView2_NavigateToPDF]: URL_or_File:" & $s_URL_or_FilePath ; #TODO suplement
 
 	If (Not IsObj($oWebV2M)) Or ObjName($oWebV2M, $OBJ_PROGID) <> 'NetWebView2Lib.WebView2Manager' Then Return SetError(1, 0, "ERROR: Invalid Object")
@@ -779,7 +784,9 @@ Func _NetWebView2_NavigateToPDF($oWebV2M, $s_URL_or_FilePath, Const $s_Parameter
 	$oWebV2M.LockWebView()
 	If $bFreeze Then __NetWebView2_freezer($oWebV2M, $idPic)
 	_NetWebView2_Navigate($oWebV2M, $s_URL_or_FilePath, $iWaitMessage, $sExpectedTitle, $iTimeOut_ms)
-	If Not @error Then Sleep($iSleep_ms)
+	If Not @error Then __NetWebView2_Sleep($iSleepAfter_ms)
+	If @error Then Return SetError(@error, @extended, '')
+
 	__NetWebView2_Log(@ScriptLineNumber, $s_Prefix, 1)
 	If $bFreeze And $idPic Then __NetWebView2_freezer($oWebV2M, $idPic)
 	$oWebV2M.UnLockWebView()
@@ -1110,6 +1117,26 @@ EndFunc   ;==>_NetJson_EncodeB64
 
 #Region ; === NetWebView2Lib UDF === #INTERNAL_USE_ONLY#
 ; #INTERNAL_USE_ONLY# ===========================================================================================================
+; Name ..........: __NetWebView2_Sleep
+; Description ...: Pause script execution for designated timeframe.
+; Syntax ........: __NetWebView2_Sleep($iPause)
+; Parameters ....: $iPause - Amount of time to pause (in milliseconds)
+; Return values .: Success - None
+;                  Failure - None and sets @error $NETWEBVIEW2_MESSAGE__USER_ABORT
+; Author ........: @Danp2, mLipok
+; Modified ......:
+; Remarks .......: Calls standard Sleep() by default. This can be overridden by setting $_g_bNetWebView2_Sleep so that a user supplied function gets called instead.
+;                  User's function can throw error which will lead to $NETWEBVIEW2_MESSAGE__USER_ABORT
+; Related .......:
+; Link ..........:
+; Example .......: No
+; ===============================================================================================================================
+Func __NetWebView2_Sleep($iPause)
+	$_g_bNetWebView2_Sleep($iPause)
+	If @error Then Return SetError($NETWEBVIEW2_MESSAGE__USER_ABORT, @extended)
+EndFunc   ;==>__NetWebView2_Sleep
+
+; #INTERNAL_USE_ONLY# ===========================================================================================================
 ; Name ..........: __NetWebView2_WaitForReadyState
 ; Description ...: Polls the browser until the document.readyState reaches 'complete'.
 ; Syntax ........: __NetWebView2_WaitForReadyState($oWebV2M, $hTimer[, $iTimeOut_ms = 5000])
@@ -1153,7 +1180,9 @@ Func __NetWebView2_WaitForReadyState($oWebV2M, $hTimer, $iTimeOut_ms = 5000)
 			__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & " TIMEOUT: Document state is " & $sReadyState & " Timeout_ms: " & Round(TimerDiff($hTimer), 0), 1)
 			Return SetError(1, 0, False)
 		EndIf
-		Sleep(50)
+		__NetWebView2_Sleep(50)
+		If @error Then Return SetError(@error, @extended, '')
+
 	WEnd
 EndFunc   ;==>__NetWebView2_WaitForReadyState
 
@@ -1479,7 +1508,7 @@ EndFunc   ;==>__NetWebView2_freezer
 
 #EndRegion ; === NetWebView2Lib UDF === #INTERNAL_USE_ONLY#
 
-#Region ; === NetWebView2Lib UDF === EVENT HANDLERS === Collection ===
+#Region ; === NetWebView2Lib UDF === EVENT HANDLERS ***** Collection *****
 
 #Region ; === NetWebView2Lib UDF === EVENT HANDLERS === Error Handlers ===
 ; #INTERNAL_USE_ONLY# ===========================================================================================================
@@ -1609,9 +1638,17 @@ Volatile Func __NetWebView2_Events__OnMessageReceived($oWebV2M, $hGUI, $sMsg)
 			__NetWebView2_LastMessage_KEEPER($oWebV2M, $NETWEBVIEW2_MESSAGE__URL_CHANGED)
 
 		Case "NAV_ERROR"
-			__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & " COMMAND:" & $sCommand, 1)
-			__NetWebView2_LastMessage_KEEPER($oWebV2M, $NETWEBVIEW2_MESSAGE__NAV_ERROR)
-			$oWebV2M.Stop()
+			If $sData = "OperationCanceled" Then ; Check if the error is actually a user cancellation
+				__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & " COMMAND:" & $sCommand & " - USER_ABORT Data:" & $sData, 1)
+				__NetWebView2_LastMessage_KEEPER($oWebV2M, $NETWEBVIEW2_MESSAGE__USER_ABORT)
+			Else
+				__NetWebView2_Log(@ScriptLineNumber, $s_Prefix & " COMMAND:" & $sCommand & " Data:" & $sData, 1)
+				__NetWebView2_LastMessage_KEEPER($oWebV2M, $NETWEBVIEW2_MESSAGE__NAV_ERROR)
+				$oWebV2M.Stop() ; We only stop if it is a real error.
+			EndIf
+
+			; 🚧 *******************************************
+			ConsoleWrite("> TEST NAV_ERR: " & $sMsg & @CRLF)
 			ConsoleWrite("> TEST NAV_ERR: __NetWebView2_LastMessage_KEEPER($oWebV2M)=" & __NetWebView2_LastMessage_KEEPER($oWebV2M) & " SLN=" & @ScriptLineNumber & @CRLF)
 
 		Case "NAV_COMPLETED"
@@ -1929,19 +1966,20 @@ EndFunc   ;==>__NetWebView2_Events__OnTitleChanged
 ; #INTERNAL_USE_ONLY# ===========================================================================================================
 ; Name ..........: __NetWebView2_Events__OnNavigationStarting
 ; Description ...:
-; Syntax ........: __NetWebView2_Events__OnNavigationStarting($oWebV2M, $hGUI, $sURL)
+; Syntax ........: __NetWebView2_Events__OnNavigationStarting($oWebV2M, $hGUI, $oArgs)
 ; Parameters ....: $oWebV2M             - an object.
 ;                  $hGUI                - a handle value.
-;                  $sURL                - a string value.
+;                  $oArgs               - an object.
 ; Return values .: None
 ; Author ........: ioa747, mLipok
 ; Modified ......:
 ; Remarks .......:
 ; Related .......:
-; Link ..........:
+; Link ..........: https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2.navigationstarting
 ; Example .......: No
 ; ===============================================================================================================================
-Volatile Func __NetWebView2_Events__OnNavigationStarting($oWebV2M, $hGUI, $sURL)
+Volatile Func __NetWebView2_Events__OnNavigationStarting($oWebV2M, $hGUI, $oArgs)
+	Local $sURL = $oArgs.Uri
 	Local Const $s_Prefix = "[EVENT: OnNavigationStarting]: GUI:" & $hGUI & " URL: " & $sURL
 	__NetWebView2_Log(@ScriptLineNumber, (StringLen($s_Prefix) > 150 ? StringLeft($s_Prefix, 150) & "..." : $s_Prefix), 1)
 	__NetWebView2_LastMessage_KEEPER($oWebV2M, $NETWEBVIEW2_MESSAGE__NAV_STARTING)
@@ -2032,7 +2070,7 @@ EndFunc   ;==>__NetWebView2_Events__OnContextMenu
 ; Modified ......:
 ; Remarks .......:
 ; Related .......:
-; Link ..........: https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2.webresourceresponsereceived?view=webview2-dotnet-1.0.2849.39
+; Link ..........: https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2.webresourceresponsereceived
 ; Example .......: No
 ; ===============================================================================================================================
 Volatile Func __NetWebView2_Events__OnWebResourceResponseReceived($oWebV2M, $hGUI, $iStatusCode, $sReasonPhrase, $sRequestUrl)
@@ -2185,7 +2223,7 @@ EndFunc   ;==>__NetWebView2_Events__OnProcessFailed
 ; Remarks .......: The host can provide a response with credentials for the authentication or cancel the request.
 ;                  If the host sets the Cancel property to false but does not provide either UserName or Password properties on the Response property, then WebView2 will show the default authentication challenge dialog prompt to the user.
 ; Related .......:
-; Link ..........: https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2.basicauthenticationrequested?view=webview2-dotnet-1.0.2903.40
+; Link ..........: https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2.basicauthenticationrequested
 ; Example .......: No
 ; ===============================================================================================================================
 Volatile Func __NetWebView2_Events__OnBasicAuthenticationRequested($oWebV2M, $hGUI, $oArgs)
@@ -2284,11 +2322,11 @@ EndFunc   ;==>__NetWebView2_Events__OnFrameNameChanged
 ; #INTERNAL_USE_ONLY# ===========================================================================================================
 ; Name ..........: __NetWebView2_Events__OnFrameNavigationStarting
 ; Description ...: Handles Frame NavigationStarting event
-; Syntax ........: __NetWebView2_Events__OnFrameNavigationStarting($oWebV2M, $hGUI, $oFrame, $sUri)
+; Syntax ........: __NetWebView2_Events__OnFrameNavigationStarting($oWebV2M, $hGUI, $oFrame, $oArgs)
 ; Parameters ....: $oWebV2M             - an object.
 ;                  $hGUI                - a handle value.
 ;                  $oFrame              - an Frame object.
-;                  $sUri                - a string value.
+;                  $oArgs               - an object.
 ; Return values .: None
 ; Author ........: ioa747
 ; Modified ......:
@@ -2297,7 +2335,8 @@ EndFunc   ;==>__NetWebView2_Events__OnFrameNameChanged
 ; Link ..........: https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2frame.navigationstarting
 ; Example .......: No
 ; ===============================================================================================================================
-Volatile Func __NetWebView2_Events__OnFrameNavigationStarting($oWebV2M, $hGUI, $oFrame, $sUri)
+Volatile Func __NetWebView2_Events__OnFrameNavigationStarting($oWebV2M, $hGUI, $oFrame, $oArgs)
+	Local $sUri = $oArgs.Uri
 	Local Const $s_Prefix = "[EVENT: OnFrameNavigationStarting]: WebV2M: " & VarGetType($oWebV2M) & " GUI:" & $hGUI & " Frame:" & VarGetType($oFrame) & " Uri:" & $sUri
 	__NetWebView2_Log(@ScriptLineNumber, $s_Prefix, 1)
 	; __NetWebView2_LastMessage_KEEPER($oWebV2M, $NETWEBVIEW2_MESSAGE__FRAME_NAV_STARTING) ; Optional: Update status if needed
@@ -2410,5 +2449,4 @@ EndFunc   ;==>__NetWebView2_Events__FrameKeeper
 ;~ EndFunc   ;==>__NetWebView2_Events__OnScreenCaptureStarting
 #EndRegion ; === NetWebView2Lib UDF === EVENT HANDLERS * #TODO ===
 
-#EndRegion ; === NetWebView2Lib UDF === EVENT HANDLERS === Collection ===
-
+#EndRegion ; === NetWebView2Lib UDF === EVENT HANDLERS ***** Collection *****
